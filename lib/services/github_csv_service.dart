@@ -35,6 +35,12 @@ class GitHubCSVService {
     'tufe.csv': ['tufe.csv', 'tüfe.csv'],
   };
 
+  /// Cache busting için tarih parametresi oluşturur (format: ?v=YYYYMMDDHHMM)
+  static String _getCacheBustingParam() {
+    final now = DateTime.now();
+    return '?v=${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}';
+  }
+
   /// GitHub'dan CSV dosyasını çeker
   /// [fileName] - assets klasöründeki dosya adı (örn: 'gruplaraylik.csv')
   /// [useCache] - Cache kullanılsın mı (varsayılan: true)
@@ -65,7 +71,7 @@ class GitHubCSVService {
         if (kIsWeb) {
           // Web için jsDelivr CDN kullan (en güvenilir)
           url =
-              'https://cdn.jsdelivr.net/gh/kaboya19/WebTufeMobile@main/assets/$tryFileName';
+              'https://cdn.jsdelivr.net/gh/kaboya19/WebTufeMobile@main/assets/$tryFileName${_getCacheBustingParam()}';
           print('jsDelivr CDN ile CSV çekiliyor (ana method): $url');
           print('Dosya adı: [$tryFileName]');
         } else {
@@ -158,7 +164,7 @@ class GitHubCSVService {
       try {
         print('jsDelivr CDN deneniyor: $fileName');
         final cdnUrl =
-            'https://cdn.jsdelivr.net/gh/kaboya19/WebTufeMobile@main/assets/$fileName';
+            'https://cdn.jsdelivr.net/gh/kaboya19/WebTufeMobile@main/assets/$fileName${_getCacheBustingParam()}';
 
         final response = await http.get(
           Uri.parse(cdnUrl),
@@ -193,7 +199,7 @@ class GitHubCSVService {
         try {
           print('Fallback Turkish karakterli dosya deneniyor: $tryFileName');
           final cdnUrl =
-              'https://cdn.jsdelivr.net/gh/kaboya19/WebTufeMobile@main/assets/$tryFileName';
+              'https://cdn.jsdelivr.net/gh/kaboya19/WebTufeMobile@main/assets/$tryFileName${_getCacheBustingParam()}';
 
           final response = await http.get(
             Uri.parse(cdnUrl),
