@@ -103,20 +103,11 @@ class _TufeHomePageState extends State<TufeHomePage> {
   bool isLoading = true;
   String? errorMessage;
   String currentMonth = CSVService.getCurrentMonth();
-  bool isOnline = true;
 
   @override
   void initState() {
     super.initState();
-    checkConnection();
     loadCSVData();
-  }
-
-  Future<void> checkConnection() async {
-    final connectionStatus = await GitHubCSVService.hasInternetConnection();
-    setState(() {
-      isOnline = connectionStatus;
-    });
   }
 
   Future<void> loadCSVData() async {
@@ -158,24 +149,6 @@ class _TufeHomePageState extends State<TufeHomePage> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  isOnline ? Icons.cloud_done : Icons.cloud_off,
-                  size: 16,
-                  color: isOnline ? Colors.green : Colors.red,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  isOnline ? 'Online' : 'Offline',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: isOnline ? Colors.green : Colors.red,
-                  ),
-                ),
-              ],
-            ),
           ],
         ),
         centerTitle: true,
@@ -190,11 +163,7 @@ class _TufeHomePageState extends State<TufeHomePage> {
                     isLoading = true;
                     errorMessage = null;
                   });
-                  await checkConnection();
                   loadCSVData();
-                  break;
-                case 'connection':
-                  await checkConnection();
                   break;
                 case 'cache_clear':
                   _clearCache();

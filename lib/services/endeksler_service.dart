@@ -5,8 +5,9 @@ import 'github_csv_service.dart';
 
 class EndekslerService {
   static Future<Map<String, dynamic>> loadEndekslerData() async {
-    final String data =
-        await GitHubCSVService.loadCSVFromGitHub('endeksler.csv');
+    final String data = await GitHubCSVService.loadCSVFromGitHub(
+        'endeksler.csv',
+        useCache: false);
 
     // Manuel olarak satırlara böl ve parse et
     List<String> lines = data.split(RegExp(r'\r?\n'));
@@ -99,7 +100,8 @@ class EndekslerService {
   }
 
   static Future<Map<String, dynamic>> loadTufeData() async {
-    final String data = await GitHubCSVService.loadCSVFromGitHub('tufe.csv');
+    final String data =
+        await GitHubCSVService.loadCSVFromGitHub('tufe.csv', useCache: false);
 
     // Manuel olarak satırlara böl ve parse et
     List<String> lines = data.split(RegExp(r'\r?\n'));

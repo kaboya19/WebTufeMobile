@@ -5,8 +5,9 @@ import 'github_csv_service.dart';
 class GruplarService {
   static Future<Map<String, dynamic>> loadGruplarData() async {
     try {
-      final String csvData =
-          await GitHubCSVService.loadCSVFromGitHub('gruplar.csv');
+      final String csvData = await GitHubCSVService.loadCSVFromGitHub(
+          'gruplar.csv',
+          useCache: false);
       print('CSV veri uzunluğu: ${csvData.length}');
 
       // Manuel olarak satırlara böl - farklı satır sonu karakterlerini handle et
@@ -97,8 +98,9 @@ class GruplarService {
 
   static Future<Map<String, dynamic>> loadGruplarAylikData() async {
     try {
-      final String csvData =
-          await GitHubCSVService.loadCSVFromGitHub('gruplaraylik.csv');
+      final String csvData = await GitHubCSVService.loadCSVFromGitHub(
+          'gruplaraylik.csv',
+          useCache: false);
 
       // Manuel olarak satırlara böl - farklı satır sonu karakterlerini handle et
       List<String> lines = csvData.split(RegExp(r'\r?\n'));
@@ -190,8 +192,9 @@ class GruplarService {
 
   static Future<List<String>> getGrupNames() async {
     try {
-      final String csvData =
-          await GitHubCSVService.loadCSVFromGitHub('gruplar.csv');
+      final String csvData = await GitHubCSVService.loadCSVFromGitHub(
+          'gruplar.csv',
+          useCache: false);
       print('CSV veri uzunluğu: ${csvData.length}');
 
       // Manuel olarak satırlara böl - farklı satır sonu karakterlerini handle et

@@ -6,8 +6,9 @@ import 'github_csv_service.dart';
 class CSVService {
   static Future<List<TufeData>> loadTufeData() async {
     try {
-      final String csvData =
-          await GitHubCSVService.loadCSVFromGitHub('gruplaraylik.csv');
+      final String csvData = await GitHubCSVService.loadCSVFromGitHub(
+          'gruplaraylik.csv',
+          useCache: false);
       print('CSV parse ediliyor... Uzunluk: ${csvData.length}');
 
       // Manuel olarak satırlara böl
@@ -122,8 +123,9 @@ class CSVService {
 
   static Future<double> getTufeMonthlyChange() async {
     try {
-      final String csvData =
-          await GitHubCSVService.loadCSVFromGitHub('gruplaraylik.csv');
+      final String csvData = await GitHubCSVService.loadCSVFromGitHub(
+          'gruplaraylik.csv',
+          useCache: false);
 
       // Manuel olarak satırlara böl
       List<String> lines = csvData.split(RegExp(r'\r?\n'));

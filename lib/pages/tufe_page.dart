@@ -33,6 +33,8 @@ class _TufePageState extends State<TufePage> {
   @override
   void initState() {
     super.initState();
+    // Cache'i temizle ve fresh data yükle
+    GitHubCSVService.clearCache();
     loadData().then((_) {
       // Load Web TÜFE data by default since it's the first option
       if (selectedEndeks == 'Web TÜFE') {
@@ -74,8 +76,9 @@ class _TufePageState extends State<TufePage> {
 
   Future<Map<String, double>> _loadMaddelerMonthlyData() async {
     try {
-      final String csvData =
-          await GitHubCSVService.loadCSVFromGitHub('maddeleraylik.csv');
+      final String csvData = await GitHubCSVService.loadCSVFromGitHub(
+          'maddeleraylik.csv',
+          useCache: false);
       List<String> lines = csvData.split(RegExp(r'\r?\n'));
 
       if (lines.isEmpty) return {};
@@ -208,8 +211,9 @@ class _TufePageState extends State<TufePage> {
         return [];
       } else {
         // Diğer endeksler için maddeleraylik.csv'den veri al
-        final String csvData =
-            await GitHubCSVService.loadCSVFromGitHub('maddeleraylik.csv');
+        final String csvData = await GitHubCSVService.loadCSVFromGitHub(
+            'maddeleraylik.csv',
+            useCache: false);
         List<String> lines = csvData.split(RegExp(r'\r?\n'));
 
         if (lines.isEmpty) return [];
