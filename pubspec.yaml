@@ -1,7 +1,7 @@
 name: webtufe_mobile
 description: "A new Flutter project."
 publish_to: 'none'
-version: 1.0.8+8
+version: 1.0.9+9
 
 environment:
   sdk: '>=3.4.3 <4.0.0'

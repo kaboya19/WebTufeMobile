@@ -2,12 +2,18 @@
     "name": "Web TÜFE",
     "short_name": "Web TÜFE",
     "start_url": ".",
+    "scope": "/",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "Günlük,web enflasyon ölçümü",
+    "description": "Günlük web enflasyon ölçümü ve TÜFE takibi",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
+    "categories": [
+        "finance",
+        "business",
+        "productivity"
+    ],
     "icons": [
         {
             "src": "icons/Icon-192.png",
