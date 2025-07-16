@@ -57,6 +57,7 @@ class OzelGostergelerChart extends StatelessWidget {
                     sideTitles: SideTitles(
                       showTitles: true,
                       reservedSize: 60,
+                      interval: 10, // 10'ar 10'ar göster
                       getTitlesWidget: (value, meta) {
                         return Text(
                           value.toInt().toString(),
@@ -152,9 +153,10 @@ class OzelGostergelerChart extends StatelessWidget {
                     sideTitles: SideTitles(
                       showTitles: true,
                       reservedSize: 60,
+                      interval: 1.0,
                       getTitlesWidget: (value, meta) {
                         return Text(
-                          value.toInt().toString(),
+                          value.toStringAsFixed(1),
                           style: const TextStyle(fontSize: 10),
                         );
                       },

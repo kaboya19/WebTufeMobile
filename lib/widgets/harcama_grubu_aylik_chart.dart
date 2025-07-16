@@ -84,7 +84,7 @@ class HarcamaGrubuAylikChart extends StatelessWidget {
                         interval: (maxY - minY) / 5,
                         getTitlesWidget: (value, meta) {
                           return Text(
-                            value.toInt().toString(),
+                            value.toStringAsFixed(1),
                             style: const TextStyle(
                               color: Colors.grey,
                               fontSize: 12,

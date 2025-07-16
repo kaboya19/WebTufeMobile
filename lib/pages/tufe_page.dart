@@ -422,6 +422,7 @@ class _TufePageState extends State<TufePage> {
               sideTitles: SideTitles(
                 showTitles: true,
                 reservedSize: 60,
+                interval: 5, // 5'er 5'er göster
                 getTitlesWidget: (value, meta) {
                   return Text(
                     value.toInt().toString(),
@@ -509,9 +510,10 @@ class _TufePageState extends State<TufePage> {
                   sideTitles: SideTitles(
                     showTitles: true,
                     reservedSize: 60,
+                    interval: 1.0,
                     getTitlesWidget: (value, meta) {
                       return Text(
-                        value.toInt().toString(),
+                        value.toStringAsFixed(1),
                         style: const TextStyle(fontSize: 10),
                       );
                     },
@@ -584,7 +586,7 @@ class _TufePageState extends State<TufePage> {
           buildTopSection(),
           const SizedBox(height: 24),
           Text(
-            'Endeks Değerleri',
+            _getChartTitle(),
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -607,5 +609,17 @@ class _TufePageState extends State<TufePage> {
         ],
       ),
     );
+  }
+
+  String _getChartTitle() {
+    if (selectedEndeks.isEmpty) {
+      return 'Endeks Değerleri';
+    }
+
+    if (selectedEndeks == 'Web TÜFE') {
+      return 'Web Tüketici Fiyat Endeksi';
+    }
+
+    return '$selectedEndeks Endeksi';
   }
 }

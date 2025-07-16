@@ -256,7 +256,7 @@ class _AnaGruplarPageState extends State<AnaGruplarPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Endeks Değerleri',
+            _getChartTitle(),
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -308,6 +308,7 @@ class _AnaGruplarPageState extends State<AnaGruplarPage> {
                           sideTitles: SideTitles(
                             showTitles: true,
                             reservedSize: 40,
+                            interval: 5, // 5'er 5'er göster
                             getTitlesWidget: (value, meta) {
                               return SideTitleWidget(
                                 axisSide: meta.axisSide,
@@ -446,7 +447,7 @@ class _AnaGruplarPageState extends State<AnaGruplarPage> {
                               return SideTitleWidget(
                                 axisSide: meta.axisSide,
                                 child: Text(
-                                  value.toInt().toString(),
+                                  value.toStringAsFixed(1),
                                   style: const TextStyle(
                                     color: Colors.grey,
                                     fontWeight: FontWeight.bold,
@@ -527,5 +528,13 @@ class _AnaGruplarPageState extends State<AnaGruplarPage> {
         ),
       ),
     );
+  }
+
+  String _getChartTitle() {
+    if (selectedGrup.isEmpty) {
+      return 'Endeks Değerleri';
+    }
+
+    return '$selectedGrup Endeksi';
   }
 }
