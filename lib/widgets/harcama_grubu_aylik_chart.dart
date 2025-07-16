@@ -148,7 +148,7 @@ class HarcamaGrubuAylikChart extends StatelessWidget {
                           entry.value.degisimOrani,
                         );
                       }).toList(),
-                      isCurved: true,
+                      isCurved: false,
                       gradient: LinearGradient(
                         colors: [
                           Colors.orange,

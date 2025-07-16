@@ -141,7 +141,7 @@ class HarcamaGrubuEndeksChart extends StatelessWidget {
                           entry.value.endeks,
                         );
                       }).toList(),
-                      isCurved: true,
+                      isCurved: false,
                       gradient: const LinearGradient(
                         colors: [
                           Colors.blue,
