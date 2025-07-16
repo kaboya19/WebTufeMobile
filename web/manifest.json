@@ -1,11 +1,11 @@
 {
-    "name": "webtufe_mobile",
-    "short_name": "webtufe_mobile",
+    "name": "Web TÜFE",
+    "short_name": "Web TÜFE",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "Günlük,web enflasyon ölçümü",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
