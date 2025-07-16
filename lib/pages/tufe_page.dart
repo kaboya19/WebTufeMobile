@@ -7,6 +7,7 @@ import '../services/maddeler_service.dart';
 import '../services/csv_service.dart';
 import '../services/gruplar_service.dart';
 import '../services/github_csv_service.dart';
+import '../services/tuik_service.dart';
 
 class TufePage extends StatefulWidget {
   const TufePage({Key? key}) : super(key: key);
@@ -195,6 +196,58 @@ class _TufePageState extends State<TufePage> {
     }).toList();
   }
 
+  // State'e tarih listelerini ekleyeceğiz
+  List<String> comparisonDates = [];
+
+  Future<Map<String, List<FlSpot>>> getComparedMonthlyChangeChartData() async {
+    if (selectedEndeks.isEmpty) return {};
+
+    try {
+      if (selectedEndeks == 'Web TÜFE') {
+        // Web TÜFE verilerini al
+        final monthlyData = await GruplarService.loadGruplarAylikData();
+        // TÜİK TÜFE verilerini al
+        final tuikData = await TuikService.loadTuikAylikData();
+
+        Map<String, List<FlSpot>> result = {};
+
+        // TÜİK tarihlerini al (daha uzun olma ihtimali yüksek)
+        final tuikDates = tuikData['dates'] as List<String>;
+        final webTufeDates = monthlyData['dates'] as List<String>;
+
+        // Daha uzun olan tarih listesini kullan
+        comparisonDates =
+            tuikDates.length >= webTufeDates.length ? tuikDates : webTufeDates;
+
+        // Web TÜFE verisi
+        if (monthlyData['data']['Web TÜFE'] != null) {
+          final values = monthlyData['data']['Web TÜFE'] as List<double>;
+          result['Web TÜFE'] = values.asMap().entries.map((entry) {
+            return FlSpot(entry.key.toDouble(), entry.value);
+          }).toList();
+        }
+
+        // TÜİK TÜFE verisi
+        if (tuikData['data']['TÜİK TÜFE'] != null) {
+          final values = tuikData['data']['TÜİK TÜFE'] as List<double>;
+          result['TÜİK TÜFE'] = values.asMap().entries.map((entry) {
+            return FlSpot(entry.key.toDouble(), entry.value);
+          }).toList();
+        }
+
+        return result;
+      }
+
+      return {};
+    } catch (e) {
+      print('Karşılaştırmalı aylık veri yükleme hatası: $e');
+      return {};
+    }
+  }
+
+  // Tek grafik için tarih listesi
+  List<String> singleChartDates = [];
+
   Future<List<FlSpot>> getMonthlyChangeChartData() async {
     if (selectedEndeks.isEmpty) return [];
 
@@ -202,6 +255,7 @@ class _TufePageState extends State<TufePage> {
       if (selectedEndeks == 'Web TÜFE') {
         // Web TÜFE için gruplaraylik.csv'den veri al
         final monthlyData = await GruplarService.loadGruplarAylikData();
+        singleChartDates = monthlyData['dates'] as List<String>;
         if (monthlyData['data']['Web TÜFE'] != null) {
           final values = monthlyData['data']['Web TÜFE'] as List<double>;
           return values.asMap().entries.map((entry) {
@@ -227,6 +281,7 @@ class _TufePageState extends State<TufePage> {
         for (int i = 2; i < headerRow.length; i++) {
           dates.add(headerRow[i].toString().trim());
         }
+        singleChartDates = dates;
 
         // Seçili endeks için veri satırını bul
         for (int i = 1; i < lines.length; i++) {
@@ -483,6 +538,166 @@ class _TufePageState extends State<TufePage> {
   }
 
   Widget buildMonthlyChangeChart() {
+    if (selectedEndeks == 'Web TÜFE') {
+      return buildComparedMonthlyChangeChart();
+    } else {
+      return buildSingleMonthlyChangeChart();
+    }
+  }
+
+  Widget buildComparedMonthlyChangeChart() {
+    return Container(
+      height: 300,
+      padding: const EdgeInsets.all(16),
+      child: FutureBuilder<Map<String, List<FlSpot>>>(
+        future: getComparedMonthlyChangeChartData(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (snapshot.hasError) {
+            return const Center(child: Text('Aylık veri yükleme hatası'));
+          }
+
+          final chartData = snapshot.data ?? {};
+          if (chartData.isEmpty) {
+            return const Center(child: Text('Aylık veri bulunamadı'));
+          }
+
+          List<LineChartBarData> lineBarsData = [];
+
+          // Web TÜFE çizgisi (mavi)
+          if (chartData.containsKey('Web TÜFE')) {
+            lineBarsData.add(
+              LineChartBarData(
+                spots: chartData['Web TÜFE']!,
+                isCurved: false,
+                color: Colors.blue,
+                barWidth: 3,
+                isStrokeCapRound: true,
+                dotData: FlDotData(show: false),
+                belowBarData: BarAreaData(
+                  show: true,
+                  color: Colors.blue.withOpacity(0.1),
+                ),
+              ),
+            );
+          }
+
+          // TÜİK TÜFE çizgisi (kırmızı)
+          if (chartData.containsKey('TÜİK TÜFE')) {
+            lineBarsData.add(
+              LineChartBarData(
+                spots: chartData['TÜİK TÜFE']!,
+                isCurved: false,
+                color: Colors.red,
+                barWidth: 3,
+                isStrokeCapRound: true,
+                dotData: FlDotData(show: false),
+                belowBarData: BarAreaData(
+                  show: true,
+                  color: Colors.red.withOpacity(0.1),
+                ),
+              ),
+            );
+          }
+
+          return Column(
+            children: [
+              // Legend
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 16,
+                      height: 3,
+                      color: Colors.blue,
+                    ),
+                    const SizedBox(width: 8),
+                    const Text('Web TÜFE', style: TextStyle(fontSize: 12)),
+                    const SizedBox(width: 20),
+                    Container(
+                      width: 16,
+                      height: 3,
+                      color: Colors.red,
+                    ),
+                    const SizedBox(width: 8),
+                    const Text('TÜİK TÜFE', style: TextStyle(fontSize: 12)),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: LineChart(
+                  LineChartData(
+                    gridData: FlGridData(show: false),
+                    titlesData: FlTitlesData(
+                      leftTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: 60,
+                          interval: 1.0,
+                          getTitlesWidget: (value, meta) {
+                            return Text(
+                              value.toStringAsFixed(1),
+                              style: const TextStyle(fontSize: 10),
+                            );
+                          },
+                        ),
+                      ),
+                      bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      rightTitles:
+                          AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      topTitles:
+                          AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    ),
+                    borderData: FlBorderData(
+                      show: true,
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    lineBarsData: lineBarsData,
+                    lineTouchData: LineTouchData(
+                      enabled: true,
+                      touchTooltipData: LineTouchTooltipData(
+                        getTooltipItems: (List<LineBarSpot> touchedSpots) {
+                          return touchedSpots.map((LineBarSpot touchedSpot) {
+                            final barIndex = touchedSpot.barIndex;
+                            final label =
+                                barIndex == 0 ? 'Web TÜFE' : 'TÜİK TÜFE';
+                            final index = touchedSpot.x.toInt();
+
+                            // Tarih bilgisini al
+                            String dateInfo = '';
+                            if (index >= 0 && index < comparisonDates.length) {
+                              dateInfo = '${comparisonDates[index]}\n';
+                            }
+
+                            return LineTooltipItem(
+                              '$dateInfo$label\n${touchedSpot.y.toStringAsFixed(2)}%',
+                              TextStyle(
+                                color: barIndex == 0 ? Colors.blue : Colors.red,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            );
+                          }).toList();
+                        },
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget buildSingleMonthlyChangeChart() {
     return Container(
       height: 300,
       padding: const EdgeInsets.all(16),
@@ -551,9 +766,9 @@ class _TufePageState extends State<TufePage> {
                   getTooltipItems: (List<LineBarSpot> touchedSpots) {
                     return touchedSpots.map((LineBarSpot touchedSpot) {
                       final index = touchedSpot.x.toInt();
-                      if (index >= 0 && index < monthNames.length) {
+                      if (index >= 0 && index < singleChartDates.length) {
                         return LineTooltipItem(
-                          '${monthNames[index]}\n${touchedSpot.y.toStringAsFixed(2)}%',
+                          '${singleChartDates[index]}\n${touchedSpot.y.toStringAsFixed(2)}%',
                           const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,

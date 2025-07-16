@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../services/gruplar_service.dart';
+import '../services/tuik_service.dart';
 
 class AnaGruplarPage extends StatefulWidget {
   const AnaGruplarPage({Key? key}) : super(key: key);
@@ -17,6 +18,9 @@ class _AnaGruplarPageState extends State<AnaGruplarPage> {
   String selectedGrup = '';
   List<String> availableGruplar = [];
   bool isLoading = true;
+
+  // Karşılaştırmalı veriler için
+  List<String> comparisonDates = [];
 
   @override
   void initState() {
@@ -95,6 +99,49 @@ class _AnaGruplarPageState extends State<AnaGruplarPage> {
     return grupMonthlyChangeData.asMap().entries.map((entry) {
       return FlSpot(entry.key.toDouble(), entry.value);
     }).toList();
+  }
+
+  // Karşılaştırmalı aylık değişim verisini al
+  Future<Map<String, List<FlSpot>>> getComparedMonthlyChangeChartData() async {
+    if (selectedGrup.isEmpty) return {};
+
+    try {
+      // Ana grup aylık verisini al
+      final monthlyData = await GruplarService.loadGruplarAylikData();
+      // TÜİK ana grup verisini al
+      final tuikData = await TuikService.loadTuikAnaGrupData(selectedGrup);
+
+      Map<String, List<FlSpot>> result = {};
+
+      // Tarih listelerini al
+      final webTufeDates = monthlyData['dates'] as List<String>;
+      final tuikDates = tuikData['dates'] as List<String>;
+
+      // Daha uzun olan tarih listesini kullan
+      comparisonDates =
+          tuikDates.length >= webTufeDates.length ? tuikDates : webTufeDates;
+
+      // Web TÜFE ana grup verisi
+      if (monthlyData['data'][selectedGrup] != null) {
+        final values = monthlyData['data'][selectedGrup] as List<double>;
+        result[selectedGrup] = values.asMap().entries.map((entry) {
+          return FlSpot(entry.key.toDouble(), entry.value);
+        }).toList();
+      }
+
+      // TÜİK ana grup verisi
+      if (tuikData['data']['TÜİK $selectedGrup'] != null) {
+        final values = tuikData['data']['TÜİK $selectedGrup'] as List<double>;
+        result['TÜİK $selectedGrup'] = values.asMap().entries.map((entry) {
+          return FlSpot(entry.key.toDouble(), entry.value);
+        }).toList();
+      }
+
+      return result;
+    } catch (e) {
+      print('Karşılaştırmalı ana grup aylık veri yükleme hatası: $e');
+      return {};
+    }
   }
 
   Widget buildTopSection() {
@@ -390,7 +437,7 @@ class _AnaGruplarPageState extends State<AnaGruplarPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Aylık Değişim (%)',
+            'Aylık Değişim (%) - Karşılaştırmalı',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -399,106 +446,160 @@ class _AnaGruplarPageState extends State<AnaGruplarPage> {
           ),
           const SizedBox(height: 16),
           SizedBox(
-            height: 200,
-            child: grupMonthlyChangeData.isEmpty ||
-                    getMonthlyChangeChartData().isEmpty
-                ? const Center(
-                    child: Text(
-                      'Veri yükleniyor...',
-                      style: TextStyle(color: Colors.grey),
+            height: 300,
+            child: FutureBuilder<Map<String, List<FlSpot>>>(
+              future: getComparedMonthlyChangeChartData(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (snapshot.hasError) {
+                  return const Center(child: Text('Aylık veri yükleme hatası'));
+                }
+
+                final chartData = snapshot.data ?? {};
+                if (chartData.isEmpty) {
+                  return const Center(child: Text('Aylık veri bulunamadı'));
+                }
+
+                List<LineChartBarData> lineBarsData = [];
+
+                // Web TÜFE ana grup çizgisi (mavi)
+                if (chartData.containsKey(selectedGrup)) {
+                  lineBarsData.add(
+                    LineChartBarData(
+                      spots: chartData[selectedGrup]!,
+                      isCurved: false,
+                      color: Colors.blue,
+                      barWidth: 3,
+                      isStrokeCapRound: true,
+                      dotData: FlDotData(show: false),
+                      belowBarData: BarAreaData(
+                        show: true,
+                        color: Colors.blue.withOpacity(0.1),
+                      ),
                     ),
-                  )
-                : LineChart(
-                    LineChartData(
-                      gridData: FlGridData(
+                  );
+                }
+
+                // TÜİK ana grup çizgisi (kırmızı)
+                if (chartData.containsKey('TÜİK $selectedGrup')) {
+                  lineBarsData.add(
+                    LineChartBarData(
+                      spots: chartData['TÜİK $selectedGrup']!,
+                      isCurved: false,
+                      color: Colors.red,
+                      barWidth: 3,
+                      isStrokeCapRound: true,
+                      dotData: FlDotData(show: false),
+                      belowBarData: BarAreaData(
                         show: true,
-                        drawVerticalLine: true,
-                        horizontalInterval: 2,
-                        verticalInterval: 1,
-                        getDrawingHorizontalLine: (value) {
-                          return FlLine(
-                            color: Colors.grey.withOpacity(0.3),
-                            strokeWidth: 1,
-                          );
-                        },
-                        getDrawingVerticalLine: (value) {
-                          return FlLine(
-                            color: Colors.grey.withOpacity(0.3),
-                            strokeWidth: 1,
-                          );
-                        },
+                        color: Colors.red.withOpacity(0.1),
                       ),
-                      titlesData: FlTitlesData(
-                        show: true,
-                        rightTitles: AxisTitles(
-                          sideTitles: SideTitles(showTitles: false),
-                        ),
-                        topTitles: AxisTitles(
-                          sideTitles: SideTitles(showTitles: false),
-                        ),
-                        bottomTitles: AxisTitles(
-                          sideTitles: SideTitles(showTitles: false),
-                        ),
-                        leftTitles: AxisTitles(
-                          sideTitles: SideTitles(
-                            showTitles: true,
-                            reservedSize: 40,
-                            getTitlesWidget: (value, meta) {
-                              return SideTitleWidget(
-                                axisSide: meta.axisSide,
-                                child: Text(
-                                  value.toStringAsFixed(1),
-                                  style: const TextStyle(
-                                    color: Colors.grey,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              );
-                            },
+                    ),
+                  );
+                }
+
+                return Column(
+                  children: [
+                    // Legend
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 16.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 16,
+                            height: 3,
+                            color: Colors.blue,
                           ),
-                        ),
+                          const SizedBox(width: 8),
+                          Text('Web TÜFE $selectedGrup',
+                              style: const TextStyle(fontSize: 12)),
+                          const SizedBox(width: 20),
+                          Container(
+                            width: 16,
+                            height: 3,
+                            color: Colors.red,
+                          ),
+                          const SizedBox(width: 8),
+                          Text('TÜİK $selectedGrup',
+                              style: const TextStyle(fontSize: 12)),
+                        ],
                       ),
-                      borderData: FlBorderData(
-                        show: true,
-                        border: Border.all(color: Colors.grey.withOpacity(0.3)),
-                      ),
-                      lineBarsData: [
-                        LineChartBarData(
-                          spots: getMonthlyChangeChartData(),
-                          isCurved: false,
-                          color: Colors.green.shade600,
-                          barWidth: 2,
-                          isStrokeCapRound: true,
-                          dotData: FlDotData(show: false),
-                          belowBarData: BarAreaData(
+                    ),
+                    Expanded(
+                      child: LineChart(
+                        LineChartData(
+                          gridData: FlGridData(show: false),
+                          titlesData: FlTitlesData(
+                            leftTitles: AxisTitles(
+                              sideTitles: SideTitles(
+                                showTitles: true,
+                                reservedSize: 60,
+                                interval: 1.0,
+                                getTitlesWidget: (value, meta) {
+                                  return Text(
+                                    value.toStringAsFixed(1),
+                                    style: const TextStyle(fontSize: 10),
+                                  );
+                                },
+                              ),
+                            ),
+                            bottomTitles: AxisTitles(
+                              sideTitles: SideTitles(showTitles: false),
+                            ),
+                            rightTitles: AxisTitles(
+                                sideTitles: SideTitles(showTitles: false)),
+                            topTitles: AxisTitles(
+                                sideTitles: SideTitles(showTitles: false)),
+                          ),
+                          borderData: FlBorderData(
                             show: true,
-                            color: Colors.green.shade600.withOpacity(0.1),
+                            border: Border.all(color: Colors.grey.shade300),
                           ),
-                        ),
-                      ],
-                      lineTouchData: LineTouchData(
-                        enabled: true,
-                        touchTooltipData: LineTouchTooltipData(
-                          getTooltipItems: (List<LineBarSpot> touchedSpots) {
-                            return touchedSpots.map((LineBarSpot touchedSpot) {
-                              final index = touchedSpot.x.toInt();
-                              if (index >= 0 && index < monthlyDates.length) {
-                                return LineTooltipItem(
-                                  '${monthlyDates[index]}\n${touchedSpot.y.toStringAsFixed(2)}%',
-                                  const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                );
-                              }
-                              return null;
-                            }).toList();
-                          },
+                          lineBarsData: lineBarsData,
+                          lineTouchData: LineTouchData(
+                            enabled: true,
+                            touchTooltipData: LineTouchTooltipData(
+                              getTooltipItems:
+                                  (List<LineBarSpot> touchedSpots) {
+                                return touchedSpots
+                                    .map((LineBarSpot touchedSpot) {
+                                  final barIndex = touchedSpot.barIndex;
+                                  final label = barIndex == 0
+                                      ? 'Web TÜFE $selectedGrup'
+                                      : 'TÜİK $selectedGrup';
+                                  final index = touchedSpot.x.toInt();
+
+                                  // Tarih bilgisini al
+                                  String dateInfo = '';
+                                  if (index >= 0 &&
+                                      index < comparisonDates.length) {
+                                    dateInfo = '${comparisonDates[index]}\n';
+                                  }
+
+                                  return LineTooltipItem(
+                                    '$dateInfo$label\n${touchedSpot.y.toStringAsFixed(2)}%',
+                                    TextStyle(
+                                      color: barIndex == 0
+                                          ? Colors.blue
+                                          : Colors.red,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  );
+                                }).toList();
+                              },
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                  ),
+                  ],
+                );
+              },
+            ),
           ),
         ],
       ),
