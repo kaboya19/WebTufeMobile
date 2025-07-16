@@ -5,7 +5,7 @@
   "packages": [
     {
       "name": "webtufe_mobile",
-      "version": "1.0.9+9",
+      "version": "1.0.20+20",
       "dependencies": [
         "csv",
         "cupertino_icons",

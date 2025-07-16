@@ -350,6 +350,8 @@ class _HarcamaGrubuAylikChartState extends State<HarcamaGrubuAylikChart> {
                   lineTouchData: LineTouchData(
                     enabled: true,
                     touchTooltipData: LineTouchTooltipData(
+                      fitInsideHorizontally: true,
+                      fitInsideVertically: true,
                       getTooltipItems: (List<LineBarSpot> touchedSpots) {
                         return touchedSpots.map((LineBarSpot touchedSpot) {
                           final index = touchedSpot.x.toInt();

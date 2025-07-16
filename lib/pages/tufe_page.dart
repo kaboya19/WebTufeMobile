@@ -196,6 +196,111 @@ class _TufePageState extends State<TufePage> {
     }).toList();
   }
 
+  // Web TÜFE seçiliyken karşılaştırmalı endeks verisi
+  Future<Map<String, List<FlSpot>>> getComparedEndeksChartData() async {
+    if (selectedEndeks != 'Web TÜFE') return {};
+
+    try {
+      // TÜİK endeks verilerini al
+      final tuikData = await TuikService.loadTuikEndeksData();
+
+      Map<String, List<FlSpot>> result = {};
+
+      // Web TÜFE verisi (günlük)
+      if (tufeValues.isNotEmpty) {
+        result['Web TÜFE'] = tufeValues.asMap().entries.map((entry) {
+          return FlSpot(entry.key.toDouble(), entry.value);
+        }).toList();
+      }
+
+      // TÜİK TÜFE verisi (aylık) - tarihleri eşleştir ve step plot için hazırla
+      if (tuikData['data']['TÜİK TÜFE'] != null) {
+        final tuikValues = tuikData['data']['TÜİK TÜFE'] as List<double>;
+        final tuikDates = tuikData['dates'] as List<String>;
+
+        List<FlSpot> tuikSpots = [];
+
+        // TÜİK verilerini Web TÜFE tarihlerinin ayın son günlerine eşleştir
+        for (int tuikIndex = 0; tuikIndex < tuikDates.length; tuikIndex++) {
+          String tuikDate = tuikDates[tuikIndex]; // Format: dd.mm.yyyy
+          double tuikValue = tuikValues[tuikIndex];
+
+          if (tuikValue.isNaN) continue;
+
+          try {
+            List<String> tuikDateParts = tuikDate.split('.');
+            if (tuikDateParts.length == 3) {
+              String tuikMonth = tuikDateParts[1]; // mm
+              String tuikYear = tuikDateParts[2]; // yyyy
+
+              // Web TÜFE tarihlerinde bu ayın son gününü bul
+              int lastDayIndex = -1;
+              for (int webIndex = tufeDates.length - 1;
+                  webIndex >= 0;
+                  webIndex--) {
+                String webDate = tufeDates[webIndex]; // Format: dd.mm.yyyy
+                List<String> webDateParts = webDate.split('.');
+                if (webDateParts.length == 3) {
+                  String webMonth = webDateParts[1]; // mm
+                  String webYear = webDateParts[2]; // yyyy
+
+                  if (webMonth == tuikMonth && webYear == tuikYear) {
+                    lastDayIndex = webIndex;
+                    break; // Bu ayın son gününü bulduk
+                  }
+                }
+              }
+
+              // Eğer o ayın son günü bulunduysa TÜİK verisini ekle
+              if (lastDayIndex != -1) {
+                tuikSpots.add(FlSpot(lastDayIndex.toDouble(), tuikValue));
+              }
+            }
+          } catch (e) {
+            print('Tarih eşleştirme hatası: $e');
+          }
+        }
+
+        // TÜİK spots'ları x değerine göre sırala
+        tuikSpots.sort((a, b) => a.x.compareTo(b.x));
+
+        // Step plot için ara değerler ekle
+        List<FlSpot> stepSpots = [];
+        for (int i = 0; i < tuikSpots.length; i++) {
+          FlSpot currentSpot = tuikSpots[i];
+          stepSpots.add(currentSpot);
+
+          // Sonraki spot varsa ara değerler ekle
+          if (i < tuikSpots.length - 1) {
+            FlSpot nextSpot = tuikSpots[i + 1];
+            double currentX = currentSpot.x;
+            double nextX = nextSpot.x;
+            double currentY = currentSpot.y;
+
+            // Ara noktalarda aynı Y değerini kullan (step effect)
+            for (double x = currentX + 1; x < nextX; x++) {
+              stepSpots.add(FlSpot(x, currentY));
+            }
+          } else {
+            // Son spot'tan sonraki değerler için son değeri kullan
+            double lastX = currentSpot.x;
+            double lastY = currentSpot.y;
+            for (double x = lastX + 1; x < tufeDates.length; x++) {
+              stepSpots.add(FlSpot(x, lastY));
+            }
+          }
+        }
+
+        result['TÜİK TÜFE'] = stepSpots;
+      }
+
+      return result;
+    } catch (e) {
+      print('Karşılaştırmalı endeks veri yükleme hatası: $e');
+      return {};
+    }
+  }
+
   // State'e tarih listelerini ekleyeceğiz
   List<String> comparisonDates = [];
 
@@ -461,6 +566,201 @@ class _TufePageState extends State<TufePage> {
   }
 
   Widget buildMainChart() {
+    if (selectedEndeks == 'Web TÜFE') {
+      return buildComparedEndeksChart();
+    } else {
+      return buildSingleEndeksChart();
+    }
+  }
+
+  Widget buildComparedEndeksChart() {
+    return Container(
+      height: 300,
+      padding: const EdgeInsets.all(16),
+      child: FutureBuilder<Map<String, List<FlSpot>>>(
+        future: getComparedEndeksChartData(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (snapshot.hasError) {
+            return const Center(child: Text('Endeks veri yükleme hatası'));
+          }
+
+          final chartData = snapshot.data ?? {};
+          if (chartData.isEmpty) {
+            return const Center(child: Text('Endeks veri bulunamadı'));
+          }
+
+          List<LineChartBarData> lineBarsData = [];
+
+          // Web TÜFE çizgisi (mavi)
+          if (chartData.containsKey('Web TÜFE')) {
+            lineBarsData.add(
+              LineChartBarData(
+                spots: chartData['Web TÜFE']!,
+                isCurved: false,
+                color: Colors.blue,
+                barWidth: 3,
+                isStrokeCapRound: true,
+                dotData: FlDotData(show: false),
+                belowBarData: BarAreaData(
+                  show: true,
+                  color: Colors.blue.withOpacity(0.1),
+                ),
+              ),
+            );
+          }
+
+          // TÜİK TÜFE çizgisi (kırmızı) - Step plot
+          if (chartData.containsKey('TÜİK TÜFE')) {
+            lineBarsData.add(
+              LineChartBarData(
+                spots: chartData['TÜİK TÜFE']!,
+                isCurved: false,
+                isStepLineChart: true, // Step plot için
+                color: Colors.red,
+                barWidth: 3,
+                isStrokeCapRound: true,
+                dotData: FlDotData(show: false),
+                belowBarData: BarAreaData(
+                  show: true,
+                  color: Colors.red.withOpacity(0.1),
+                ),
+              ),
+            );
+          }
+
+          // Y-axis için dinamik aralık hesaplama
+          double minY = double.infinity;
+          double maxY = double.negativeInfinity;
+
+          for (var series in chartData.values) {
+            for (var spot in series) {
+              if (spot.y < minY) minY = spot.y;
+              if (spot.y > maxY) maxY = spot.y;
+            }
+          }
+
+          double range = maxY - minY;
+          double interval = 5.0;
+          if (range <= 20) {
+            interval = 2.0;
+          } else if (range <= 50) {
+            interval = 5.0;
+          } else if (range <= 100) {
+            interval = 10.0;
+          } else if (range <= 200) {
+            interval = 15.0;
+          } else {
+            interval = 20.0;
+          }
+
+          return Column(
+            children: [
+              // Legend
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 16,
+                      height: 3,
+                      color: Colors.blue,
+                    ),
+                    const SizedBox(width: 8),
+                    const Text('Web TÜFE', style: TextStyle(fontSize: 12)),
+                    const SizedBox(width: 20),
+                    Container(
+                      width: 16,
+                      height: 3,
+                      color: Colors.red,
+                    ),
+                    const SizedBox(width: 8),
+                    const Text('TÜİK TÜFE', style: TextStyle(fontSize: 12)),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: LineChart(
+                  LineChartData(
+                    gridData: FlGridData(show: false),
+                    titlesData: FlTitlesData(
+                      leftTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: 60,
+                          interval: interval,
+                          getTitlesWidget: (value, meta) {
+                            if (interval >= 10.0) {
+                              return Text(
+                                value.toInt().toString(),
+                                style: const TextStyle(fontSize: 10),
+                              );
+                            } else {
+                              return Text(
+                                value.toStringAsFixed(1),
+                                style: const TextStyle(fontSize: 10),
+                              );
+                            }
+                          },
+                        ),
+                      ),
+                      bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      rightTitles:
+                          AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      topTitles:
+                          AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    ),
+                    borderData: FlBorderData(
+                      show: true,
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    lineBarsData: lineBarsData,
+                    lineTouchData: LineTouchData(
+                      enabled: true,
+                      touchTooltipData: LineTouchTooltipData(
+                        fitInsideHorizontally: true,
+                        fitInsideVertically: true,
+                        getTooltipItems: (List<LineBarSpot> touchedSpots) {
+                          return touchedSpots.map((LineBarSpot touchedSpot) {
+                            final barIndex = touchedSpot.barIndex;
+                            final label =
+                                barIndex == 0 ? 'Web TÜFE' : 'TÜİK TÜFE';
+                            final index = touchedSpot.x.toInt();
+
+                            // Tarih bilgisini al
+                            String dateInfo = '';
+                            if (index >= 0 && index < tufeDates.length) {
+                              dateInfo = '${tufeDates[index]}\n';
+                            }
+
+                            return LineTooltipItem(
+                              '$dateInfo$label\n${touchedSpot.y.toStringAsFixed(2)}',
+                              TextStyle(
+                                color: barIndex == 0 ? Colors.blue : Colors.red,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            );
+                          }).toList();
+                        },
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget buildSingleEndeksChart() {
     final spots = getMainChartData();
     if (spots.isEmpty) {
       return const Center(child: Text('Veri bulunamadı'));
@@ -513,6 +813,8 @@ class _TufePageState extends State<TufePage> {
           lineTouchData: LineTouchData(
             enabled: true,
             touchTooltipData: LineTouchTooltipData(
+              fitInsideHorizontally: true,
+              fitInsideVertically: true,
               getTooltipItems: (List<LineBarSpot> touchedSpots) {
                 return touchedSpots.map((LineBarSpot touchedSpot) {
                   final index = touchedSpot.x.toInt();
@@ -663,6 +965,8 @@ class _TufePageState extends State<TufePage> {
                     lineTouchData: LineTouchData(
                       enabled: true,
                       touchTooltipData: LineTouchTooltipData(
+                        fitInsideHorizontally: true,
+                        fitInsideVertically: true,
                         getTooltipItems: (List<LineBarSpot> touchedSpots) {
                           return touchedSpots.map((LineBarSpot touchedSpot) {
                             final barIndex = touchedSpot.barIndex;
@@ -763,6 +1067,8 @@ class _TufePageState extends State<TufePage> {
               lineTouchData: LineTouchData(
                 enabled: true,
                 touchTooltipData: LineTouchTooltipData(
+                  fitInsideHorizontally: true,
+                  fitInsideVertically: true,
                   getTooltipItems: (List<LineBarSpot> touchedSpots) {
                     return touchedSpots.map((LineBarSpot touchedSpot) {
                       final index = touchedSpot.x.toInt();
