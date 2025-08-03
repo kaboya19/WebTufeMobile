@@ -110,12 +110,6 @@ class _TufeHomePageState extends State<TufeHomePage> {
     loadCSVData();
   }
 
-  @override
-  void initState() {
-    super.initState();
-    loadCSVData();
-  }
-
   Future<void> loadCSVData() async {
     try {
       final data = await CSVService.loadTufeData();
