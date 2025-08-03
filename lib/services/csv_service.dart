@@ -121,6 +121,67 @@ class CSVService {
     return months[now.month - 1];
   }
 
+  static Future<String> getMonthFromCSV() async {
+    try {
+      final String csvData = await GitHubCSVService.loadCSVFromGitHub(
+          'gruplaraylik.csv',
+          useCache: false);
+
+      // Manuel olarak satırlara böl
+      List<String> lines = csvData.split(RegExp(r'\r?\n'));
+      List<List<dynamic>> rows = [];
+
+      for (String line in lines) {
+        String trimmedLine = line.trim();
+        if (trimmedLine.isNotEmpty) {
+          try {
+            List<List<dynamic>> parsedLine =
+                const CsvToListConverter().convert(trimmedLine);
+            if (parsedLine.isNotEmpty) {
+              rows.add(parsedLine[0]);
+            }
+          } catch (e) {
+            // Parse hatalarını sessizce atla
+          }
+        }
+      }
+
+      if (rows.isEmpty || rows[0].length < 3) {
+        // Fallback olarak sistem tarihini kullan
+        return getCurrentMonth();
+      }
+
+      // Header satırından son sütundaki tarihi al
+      String lastDateString = rows[0].last.toString().trim();
+      
+      // Tarih formatını parse et (2025-08-31 formatında)
+      try {
+        DateTime lastDate = DateTime.parse(lastDateString);
+        const months = [
+          'Ocak',
+          'Şubat',
+          'Mart',
+          'Nisan',
+          'Mayıs',
+          'Haziran',
+          'Temmuz',
+          'Ağustos',
+          'Eylül',
+          'Ekim',
+          'Kasım',
+          'Aralık'
+        ];
+        return months[lastDate.month - 1];
+      } catch (e) {
+        // Tarih parse edilemezse sistem tarihini kullan
+        return getCurrentMonth();
+      }
+    } catch (e) {
+      // Hata durumunda sistem tarihini kullan
+      return getCurrentMonth();
+    }
+  }
+
   static Future<double> getTufeMonthlyChange() async {
     try {
       final String csvData = await GitHubCSVService.loadCSVFromGitHub(

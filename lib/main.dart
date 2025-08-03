@@ -102,7 +102,13 @@ class _TufeHomePageState extends State<TufeHomePage> {
   List<TufeData> tufeDataList = [];
   bool isLoading = true;
   String? errorMessage;
-  String currentMonth = CSVService.getCurrentMonth();
+  String currentMonth = '';
+
+  @override
+  void initState() {
+    super.initState();
+    loadCSVData();
+  }
 
   @override
   void initState() {
@@ -113,8 +119,10 @@ class _TufeHomePageState extends State<TufeHomePage> {
   Future<void> loadCSVData() async {
     try {
       final data = await CSVService.loadTufeData();
+      final month = await CSVService.getMonthFromCSV();
       setState(() {
         tufeDataList = data;
+        currentMonth = month;
         isLoading = false;
         errorMessage = null;
       });
@@ -122,6 +130,7 @@ class _TufeHomePageState extends State<TufeHomePage> {
       setState(() {
         isLoading = false;
         errorMessage = e.toString();
+        currentMonth = CSVService.getCurrentMonth(); // Fallback
       });
     }
   }
