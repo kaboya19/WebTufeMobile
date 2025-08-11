@@ -136,6 +136,25 @@ class _TufeHomePageState extends State<TufeHomePage> {
     );
   }
 
+  void _refreshData() async {
+    GitHubCSVService.clearCache();
+    setState(() {
+      isLoading = true;
+      errorMessage = null;
+    });
+    await loadCSVData();
+    
+    // Refresh successful feedback
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Veriler yenilendi'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -161,12 +180,7 @@ class _TufeHomePageState extends State<TufeHomePage> {
             onSelected: (value) async {
               switch (value) {
                 case 'refresh':
-                  GitHubCSVService.clearCache();
-                  setState(() {
-                    isLoading = true;
-                    errorMessage = null;
-                  });
-                  loadCSVData();
+                  _refreshData();
                   break;
                 case 'cache_clear':
                   _clearCache();
@@ -258,6 +272,22 @@ class _TufeHomePageState extends State<TufeHomePage> {
                     ],
                   ),
                 ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: isLoading ? null : _refreshData,
+        backgroundColor: isLoading ? Colors.grey : Colors.blue,
+        child: isLoading 
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2,
+                ),
+              )
+            : const Icon(Icons.refresh, color: Colors.white),
+        tooltip: 'Verileri Yenile',
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 }
