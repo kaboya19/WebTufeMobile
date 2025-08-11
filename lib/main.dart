@@ -179,25 +179,12 @@ class _TufeHomePageState extends State<TufeHomePage> {
             icon: const Icon(Icons.more_vert, color: Colors.black),
             onSelected: (value) async {
               switch (value) {
-                case 'refresh':
-                  _refreshData();
-                  break;
                 case 'cache_clear':
                   _clearCache();
                   break;
               }
             },
             itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'refresh',
-                child: Row(
-                  children: [
-                    Icon(Icons.refresh),
-                    SizedBox(width: 8),
-                    Text('Verileri Yenile'),
-                  ],
-                ),
-              ),
               const PopupMenuItem(
                 value: 'connection',
                 child: Row(
