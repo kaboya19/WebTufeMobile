@@ -20,13 +20,23 @@ class TufeChart extends StatelessWidget {
   }
 
   Widget _buildBar(TufeData tufeData, BuildContext context) {
-    final maxValue = data.first.changeRate;
-    final barWidth =
-        maxValue > 0 ? (tufeData.changeRate / maxValue) * 0.8 : 0.0;
-
-    // Bar genişliği hesaplama (piksel cinsinden)
-    final barWidthPx =
-        (MediaQuery.of(context).size.width * 0.5 * barWidth).toDouble();
+    // Tüm değerlerden maksimum mutlak değeri bul
+    final maxAbsValue = data.map((e) => e.changeRate.abs())
+        .reduce((a, b) => a > b ? a : b);
+    
+    // Bar genişliği hesaplama (0.4 = %40 ekran genişliği)
+    final barWidthRatio = maxAbsValue > 0 ? (tufeData.changeRate.abs() / maxAbsValue) * 0.4 : 0.0;
+    final barWidthPx = MediaQuery.of(context).size.width * barWidthRatio;
+    
+    // Pozitif/negatif durumuna göre renk
+    Color barColor;
+    if (tufeData.changeRate > 0) {
+      barColor = tufeData.isWebTufe ? Colors.red : Colors.blue;
+    } else if (tufeData.changeRate < 0) {
+      barColor = tufeData.isWebTufe ? Colors.red.shade300 : Colors.blue.shade300;
+    } else {
+      barColor = Colors.grey.shade400;
+    }
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 2.0),
@@ -49,36 +59,81 @@ class TufeChart extends StatelessWidget {
               ),
             ),
           ),
-          // Grafik alanı (orta) - Bar ve text yan yana
+          // Grafik alanı (orta)
           Expanded(
             flex: 5,
             child: Container(
               height: 30,
-              alignment: Alignment.centerLeft,
               child: Row(
                 children: [
-                  // Bar (çubuk)
-                  Container(
-                    width: barWidthPx,
-                    height: 25,
-                    decoration: BoxDecoration(
-                      color: tufeData.isWebTufe ? Colors.red : Colors.blue,
-                      borderRadius: const BorderRadius.only(
-                        topRight: Radius.circular(2),
-                        bottomRight: Radius.circular(2),
+                  // Negatif değerler için sol tarafa bar
+                  if (tufeData.changeRate < 0) ...[
+                    Expanded(
+                      child: Container(
+                        alignment: Alignment.centerRight,
+                        child: Container(
+                          width: barWidthPx,
+                          height: 25,
+                          decoration: BoxDecoration(
+                            color: barColor,
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(2),
+                              bottomLeft: Radius.circular(2),
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                  // Yüzde değeri - barın hemen yanında
-                  const SizedBox(width: 5),
-                  Text(
-                    tufeData.formattedChangeRate,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                    // Sıfır çizgisi (referans noktası)
+                    Container(
+                      width: 2,
+                      height: 30,
+                      color: Colors.grey.shade400,
                     ),
-                  ),
+                    // Negatif değer için metin
+                    const SizedBox(width: 5),
+                    Text(
+                      tufeData.formattedChangeRate,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const Spacer(),
+                  ] else ...[
+                    // Pozitif değerler için sağ tarafa bar
+                    // Sıfır çizgisi (referans noktası)
+                    Container(
+                      width: 2,
+                      height: 30,
+                      color: Colors.grey.shade400,
+                    ),
+                    const SizedBox(width: 2),
+                    // Pozitif bar
+                    Container(
+                      width: barWidthPx,
+                      height: 25,
+                      decoration: BoxDecoration(
+                        color: barColor,
+                        borderRadius: const BorderRadius.only(
+                          topRight: Radius.circular(2),
+                          bottomRight: Radius.circular(2),
+                        ),
+                      ),
+                    ),
+                    // Pozitif değer için metin
+                    const SizedBox(width: 5),
+                    Text(
+                      tufeData.formattedChangeRate,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const Spacer(),
+                  ],
                 ],
               ),
             ),
