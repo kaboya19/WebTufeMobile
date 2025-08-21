@@ -24,8 +24,9 @@ class TufeChart extends StatelessWidget {
     final maxAbsValue = data.map((e) => e.changeRate.abs())
         .reduce((a, b) => a > b ? a : b);
     
-    // Bar genişliği flex oranı olarak hesapla
-    final barFlexRatio = maxAbsValue > 0 ? (tufeData.changeRate.abs() / maxAbsValue) : 0.0;
+    // Bar genişliğini hesapla (ekranın %30'u maksimum - her iki yön için)
+    double barWidthRatio = maxAbsValue > 0 ? (tufeData.changeRate.abs() / maxAbsValue) * 0.3 : 0.0;
+    double screenWidth = MediaQuery.of(context).size.width - 32; // padding dahil
     
     // Pozitif/negatif durumuna göre renk
     Color barColor;
@@ -58,104 +59,55 @@ class TufeChart extends StatelessWidget {
               ),
             ),
           ),
-          // Grafik alanı (orta)
+          // Grafik alanı (orta) - harcama grupları gibi Stack kullan
           Expanded(
             flex: 5,
-            child: Container(
+            child: SizedBox(
               height: 30,
-              child: Row(
+              child: Stack(
                 children: [
-                  // Sol taraf - negatif barlar için alan (flex: 2)
-                  Expanded(
-                    flex: 2,
+                  // Orta çizgi (sıfır referansı)
+                  Positioned(
+                    left: screenWidth * 0.5 / 1.6 - 1, // Grafik alanının ortası
+                    top: 0,
+                    bottom: 0,
                     child: Container(
-                      height: 30,
-                      alignment: Alignment.centerRight,
-                      child: tufeData.changeRate < 0 
-                          ? Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
-                                // Negatif bar için text - barın solunda
-                                Text(
-                                  tufeData.formattedChangeRate,
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black87,
-                                  ),
-                                ),
-                                const SizedBox(width: 4),
-                                // Negatif bar
-                                FractionallySizedBox(
-                                  widthFactor: barFlexRatio,
-                                  child: Container(
-                                    height: 25,
-                                    decoration: BoxDecoration(
-                                      color: barColor,
-                                      borderRadius: const BorderRadius.only(
-                                        topLeft: Radius.circular(2),
-                                        bottomLeft: Radius.circular(2),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            )
-                          : Container(),
+                      width: 2,
+                      color: Colors.grey.shade400,
                     ),
                   ),
-                  // Sıfır çizgisi (referans noktası)
-                  Container(
-                    width: 2,
-                    height: 30,
-                    color: Colors.grey.shade400,
-                  ),
-                  // Sağ taraf - pozitif barlar için alan (flex: 2)
-                  Expanded(
-                    flex: 2,
-                    child: Container(
-                      height: 30,
-                      alignment: Alignment.centerLeft,
-                      child: tufeData.changeRate > 0 
-                          ? Row(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              children: [
-                                // Pozitif bar
-                                FractionallySizedBox(
-                                  widthFactor: barFlexRatio,
-                                  child: Container(
-                                    height: 25,
-                                    decoration: BoxDecoration(
-                                      color: barColor,
-                                      borderRadius: const BorderRadius.only(
-                                        topRight: Radius.circular(2),
-                                        bottomRight: Radius.circular(2),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 4),
-                                // Pozitif bar için text - barın sağında
-                                Text(
-                                  tufeData.formattedChangeRate,
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black87,
-                                  ),
-                                ),
-                              ],
-                            )
-                          : tufeData.changeRate == 0
-                          ? Text(
-                              tufeData.formattedChangeRate,
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black87,
-                              ),
-                            )
-                          : Container(),
+                  // Bar
+                  if (tufeData.changeRate != 0)
+                    Positioned(
+                      left: tufeData.changeRate >= 0
+                          ? screenWidth * 0.5 / 1.6 // Pozitif: orta noktadan başla
+                          : screenWidth * 0.5 / 1.6 - (screenWidth * 0.5 / 1.6 * barWidthRatio), // Negatif: orta noktadan sola
+                      top: 2,
+                      child: Container(
+                        height: 26,
+                        width: screenWidth * 0.5 / 1.6 * barWidthRatio,
+                        decoration: BoxDecoration(
+                          color: barColor,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                  // Değer etiketi
+                  Positioned(
+                    left: tufeData.changeRate >= 0
+                        ? screenWidth * 0.5 / 1.6 + (screenWidth * 0.5 / 1.6 * barWidthRatio) + 4 // Pozitif: barın sağında
+                        : screenWidth * 0.5 / 1.6 - (screenWidth * 0.5 / 1.6 * barWidthRatio) - 50, // Negatif: barın solunda
+                    top: 0,
+                    bottom: 0,
+                    child: Center(
+                      child: Text(
+                        tufeData.formattedChangeRate,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
                     ),
                   ),
                 ],
