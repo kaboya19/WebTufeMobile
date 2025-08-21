@@ -24,9 +24,8 @@ class TufeChart extends StatelessWidget {
     final maxAbsValue = data.map((e) => e.changeRate.abs())
         .reduce((a, b) => a > b ? a : b);
     
-    // Bar genişliği hesaplama (0.4 = %40 ekran genişliği)
-    final barWidthRatio = maxAbsValue > 0 ? (tufeData.changeRate.abs() / maxAbsValue) * 0.4 : 0.0;
-    final barWidthPx = MediaQuery.of(context).size.width * barWidthRatio;
+    // Bar genişliği flex oranı olarak hesapla
+    final barFlexRatio = maxAbsValue > 0 ? (tufeData.changeRate.abs() / maxAbsValue) : 0.0;
     
     // Pozitif/negatif durumuna göre renk
     Color barColor;
@@ -37,7 +36,7 @@ class TufeChart extends StatelessWidget {
     } else {
       barColor = Colors.grey.shade400;
     }
-
+    
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 2.0),
       height: 40,
@@ -66,74 +65,72 @@ class TufeChart extends StatelessWidget {
               height: 30,
               child: Row(
                 children: [
-                  // Negatif değerler için sol tarafa bar
-                  if (tufeData.changeRate < 0) ...[
-                    Expanded(
-                      child: Container(
-                        alignment: Alignment.centerRight,
-                        child: Container(
-                          width: barWidthPx,
-                          height: 25,
-                          decoration: BoxDecoration(
-                            color: barColor,
-                            borderRadius: const BorderRadius.only(
-                              topLeft: Radius.circular(2),
-                              bottomLeft: Radius.circular(2),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    // Sıfır çizgisi (referans noktası)
-                    Container(
-                      width: 2,
+                  // Sol taraf - negatif barlar için alan (flex: 2)
+                  Expanded(
+                    flex: 2,
+                    child: Container(
                       height: 30,
-                      color: Colors.grey.shade400,
+                      alignment: Alignment.centerRight,
+                      child: tufeData.changeRate < 0 
+                          ? FractionallySizedBox(
+                              widthFactor: barFlexRatio,
+                              child: Container(
+                                height: 25,
+                                decoration: BoxDecoration(
+                                  color: barColor,
+                                  borderRadius: const BorderRadius.only(
+                                    topLeft: Radius.circular(2),
+                                    bottomLeft: Radius.circular(2),
+                                  ),
+                                ),
+                              ),
+                            )
+                          : Container(),
                     ),
-                    // Negatif değer için metin
-                    const SizedBox(width: 5),
-                    Text(
+                  ),
+                  // Sıfır çizgisi (referans noktası)
+                  Container(
+                    width: 2,
+                    height: 30,
+                    color: Colors.grey.shade400,
+                  ),
+                  // Sağ taraf - pozitif barlar için alan (flex: 2)
+                  Expanded(
+                    flex: 2,
+                    child: Container(
+                      height: 30,
+                      alignment: Alignment.centerLeft,
+                      child: tufeData.changeRate > 0 
+                          ? FractionallySizedBox(
+                              widthFactor: barFlexRatio,
+                              child: Container(
+                                height: 25,
+                                decoration: BoxDecoration(
+                                  color: barColor,
+                                  borderRadius: const BorderRadius.only(
+                                    topRight: Radius.circular(2),
+                                    bottomRight: Radius.circular(2),
+                                  ),
+                                ),
+                              ),
+                            )
+                          : Container(),
+                    ),
+                  ),
+                  // Text alanı - tüm textler aynı konumda başlayacak
+                  const SizedBox(width: 8),
+                  SizedBox(
+                    width: 60,
+                    child: Text(
                       tufeData.formattedChangeRate,
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
                         color: Colors.black87,
                       ),
+                      textAlign: TextAlign.left,
                     ),
-                    const Spacer(),
-                  ] else ...[
-                    // Pozitif değerler için sağ tarafa bar
-                    // Sıfır çizgisi (referans noktası)
-                    Container(
-                      width: 2,
-                      height: 30,
-                      color: Colors.grey.shade400,
-                    ),
-                    const SizedBox(width: 2),
-                    // Pozitif bar
-                    Container(
-                      width: barWidthPx,
-                      height: 25,
-                      decoration: BoxDecoration(
-                        color: barColor,
-                        borderRadius: const BorderRadius.only(
-                          topRight: Radius.circular(2),
-                          bottomRight: Radius.circular(2),
-                        ),
-                      ),
-                    ),
-                    // Pozitif değer için metin
-                    const SizedBox(width: 5),
-                    Text(
-                      tufeData.formattedChangeRate,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    const Spacer(),
-                  ],
+                  ),
                 ],
               ),
             ),
