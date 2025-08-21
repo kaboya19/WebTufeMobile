@@ -72,18 +72,34 @@ class TufeChart extends StatelessWidget {
                       height: 30,
                       alignment: Alignment.centerRight,
                       child: tufeData.changeRate < 0 
-                          ? FractionallySizedBox(
-                              widthFactor: barFlexRatio,
-                              child: Container(
-                                height: 25,
-                                decoration: BoxDecoration(
-                                  color: barColor,
-                                  borderRadius: const BorderRadius.only(
-                                    topLeft: Radius.circular(2),
-                                    bottomLeft: Radius.circular(2),
+                          ? Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                // Negatif bar için text - barın solunda
+                                Text(
+                                  tufeData.formattedChangeRate,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black87,
                                   ),
                                 ),
-                              ),
+                                const SizedBox(width: 4),
+                                // Negatif bar
+                                FractionallySizedBox(
+                                  widthFactor: barFlexRatio,
+                                  child: Container(
+                                    height: 25,
+                                    decoration: BoxDecoration(
+                                      color: barColor,
+                                      borderRadius: const BorderRadius.only(
+                                        topLeft: Radius.circular(2),
+                                        bottomLeft: Radius.circular(2),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             )
                           : Container(),
                     ),
@@ -101,34 +117,45 @@ class TufeChart extends StatelessWidget {
                       height: 30,
                       alignment: Alignment.centerLeft,
                       child: tufeData.changeRate > 0 
-                          ? FractionallySizedBox(
-                              widthFactor: barFlexRatio,
-                              child: Container(
-                                height: 25,
-                                decoration: BoxDecoration(
-                                  color: barColor,
-                                  borderRadius: const BorderRadius.only(
-                                    topRight: Radius.circular(2),
-                                    bottomRight: Radius.circular(2),
+                          ? Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                // Pozitif bar
+                                FractionallySizedBox(
+                                  widthFactor: barFlexRatio,
+                                  child: Container(
+                                    height: 25,
+                                    decoration: BoxDecoration(
+                                      color: barColor,
+                                      borderRadius: const BorderRadius.only(
+                                        topRight: Radius.circular(2),
+                                        bottomRight: Radius.circular(2),
+                                      ),
+                                    ),
                                   ),
                                 ),
+                                const SizedBox(width: 4),
+                                // Pozitif bar için text - barın sağında
+                                Text(
+                                  tufeData.formattedChangeRate,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                              ],
+                            )
+                          : tufeData.changeRate == 0
+                          ? Text(
+                              tufeData.formattedChangeRate,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
                               ),
                             )
                           : Container(),
-                    ),
-                  ),
-                  // Text alanı - tüm textler aynı konumda başlayacak
-                  const SizedBox(width: 8),
-                  SizedBox(
-                    width: 60,
-                    child: Text(
-                      tufeData.formattedChangeRate,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                      textAlign: TextAlign.left,
                     ),
                   ),
                 ],
