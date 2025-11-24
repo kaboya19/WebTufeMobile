@@ -256,17 +256,25 @@ class _HarcamaGrubuEndeksChartState extends State<HarcamaGrubuEndeksChart> {
 
                   double range = maxY - minY;
                   double interval = 5.0;
-                  if (range <= 20) {
+                  if (range <= 10) {
                     interval = 2.0;
-                  } else if (range <= 50) {
+                  } else if (range <= 25) {
                     interval = 5.0;
-                  } else if (range <= 100) {
+                  } else if (range <= 50) {
                     interval = 10.0;
-                  } else if (range <= 200) {
+                  } else if (range <= 100) {
                     interval = 15.0;
+                  } else if (range <= 200) {
+                    interval = 25.0;
+                  } else if (range <= 400) {
+                    interval = 50.0;
                   } else {
-                    interval = 20.0;
+                    interval = 100.0;
                   }
+
+                  // Y ekseni sınırlarını interval'e göre ayarla
+                  double adjustedMinY = (minY / interval).floor() * interval;
+                  double adjustedMaxY = (maxY / interval).ceil() * interval + interval;
 
                   return Column(
                     children: [
@@ -299,6 +307,8 @@ class _HarcamaGrubuEndeksChartState extends State<HarcamaGrubuEndeksChart> {
                       Expanded(
                         child: LineChart(
                           LineChartData(
+                            minY: adjustedMinY,
+                            maxY: adjustedMaxY,
                             gridData: FlGridData(show: false),
                             titlesData: FlTitlesData(
                               leftTitles: AxisTitles(
@@ -307,7 +317,18 @@ class _HarcamaGrubuEndeksChartState extends State<HarcamaGrubuEndeksChart> {
                                   reservedSize: 60,
                                   interval: interval,
                                   getTitlesWidget: (value, meta) {
-                                    if (interval >= 10.0) {
+                                    // Interval'e göre format belirle
+                                    if (interval >= 25.0) {
+                                      return Text(
+                                        value.toInt().toString(),
+                                        style: const TextStyle(fontSize: 10),
+                                      );
+                                    } else if (interval >= 10.0) {
+                                      return Text(
+                                        value.toInt().toString(),
+                                        style: const TextStyle(fontSize: 10),
+                                      );
+                                    } else if (interval >= 5.0) {
                                       return Text(
                                         value.toInt().toString(),
                                         style: const TextStyle(fontSize: 10),

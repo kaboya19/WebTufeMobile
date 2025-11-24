@@ -224,28 +224,64 @@ class _AnaGruplarPageState extends State<AnaGruplarPage> {
 
       Map<String, List<FlSpot>> result = {};
 
-      // Tarih listelerini al
       final webTufeDates = monthlyData['dates'] as List<String>;
       final tuikDates = tuikData['dates'] as List<String>;
 
-      // Daha uzun olan tarih listesini kullan
-      comparisonDates =
-          tuikDates.length >= webTufeDates.length ? tuikDates : webTufeDates;
+      // Web TÜFE tarihlerini parse et ve sırala
+      List<MapEntry<String, int>> webTufeDateList = []; // "YYYY-MM" -> index
+      for (int i = 0; i < webTufeDates.length; i++) {
+        String dateStr = webTufeDates[i];
+        String? yearMonth = _parseDateToYearMonth(dateStr);
+        if (yearMonth != null) {
+          webTufeDateList.add(MapEntry(yearMonth, i));
+        }
+      }
+      // Tarihe göre sırala
+      webTufeDateList.sort((a, b) => a.key.compareTo(b.key));
 
-      // Web TÜFE ana grup verisi
-      if (monthlyData['data'][selectedGrup] != null) {
-        final values = monthlyData['data'][selectedGrup] as List<double>;
-        result[selectedGrup] = values.asMap().entries.map((entry) {
-          return FlSpot(entry.key.toDouble(), entry.value);
-        }).toList();
+      // TÜİK tarihlerini parse et ve map'e çevir
+      Map<String, int> tuikDateMap = {}; // "YYYY-MM" -> index
+      for (int i = 0; i < tuikDates.length; i++) {
+        String dateStr = tuikDates[i];
+        String? yearMonth = _parseDateToYearMonth(dateStr);
+        if (yearMonth != null) {
+          tuikDateMap[yearMonth] = i;
+        }
       }
 
-      // TÜİK ana grup verisi
+      // comparisonDates'i Web TÜFE tarihlerine göre güncelle
+      comparisonDates = webTufeDateList.map((e) => e.key).toList();
+
+      // Web TÜFE ana grup verisi - tüm tarihler için
+      if (monthlyData['data'][selectedGrup] != null) {
+        final values = monthlyData['data'][selectedGrup] as List<double>;
+        List<FlSpot> webTufeSpots = [];
+        for (int i = 0; i < webTufeDateList.length; i++) {
+          int webIndex = webTufeDateList[i].value;
+          if (webIndex < values.length) {
+            webTufeSpots.add(FlSpot(i.toDouble(), values[webIndex]));
+          }
+        }
+        result[selectedGrup] = webTufeSpots;
+      }
+
+      // TÜİK ana grup verisi - Web TÜFE tarihlerine göre eşleştir (sadece mevcut verileri ekle)
       if (tuikData['data']['TÜİK $selectedGrup'] != null) {
         final values = tuikData['data']['TÜİK $selectedGrup'] as List<double>;
-        result['TÜİK $selectedGrup'] = values.asMap().entries.map((entry) {
-          return FlSpot(entry.key.toDouble(), entry.value);
-        }).toList();
+        List<FlSpot> tuikSpots = [];
+        for (int i = 0; i < webTufeDateList.length; i++) {
+          String yearMonth = webTufeDateList[i].key;
+          int? tuikIndex = tuikDateMap[yearMonth];
+          if (tuikIndex != null && tuikIndex < values.length) {
+            // TÜİK verisi varsa ekle (NaN değil, gerçek veri)
+            double value = values[tuikIndex];
+            if (!value.isNaN) {
+              tuikSpots.add(FlSpot(i.toDouble(), value));
+            }
+          }
+          // TÜİK verisi yoksa hiçbir şey ekleme (çizgi kesilir)
+        }
+        result['TÜİK $selectedGrup'] = tuikSpots;
       }
 
       return result;
@@ -253,6 +289,62 @@ class _AnaGruplarPageState extends State<AnaGruplarPage> {
       print('Karşılaştırmalı ana grup aylık veri yükleme hatası: $e');
       return {};
     }
+  }
+
+  /// Tarih string'ini "YYYY-MM" formatına çevirir
+  String? _parseDateToYearMonth(String dateStr) {
+    try {
+      // Format: "dd.mm.yyyy"
+      if (dateStr.contains('.')) {
+        List<String> parts = dateStr.split('.');
+        if (parts.length == 3) {
+          String day = parts[0];
+          String month = parts[1];
+          String year = parts[2];
+          return '$year-${month.padLeft(2, '0')}';
+        }
+      }
+      // Format: "Oca 2025" veya "Ocak 2025"
+      else if (dateStr.contains(' ')) {
+        List<String> parts = dateStr.split(' ');
+        if (parts.length == 2) {
+          String monthStr = parts[0];
+          String year = parts[1];
+          
+          Map<String, String> monthMap = {
+            'Oca': '01', 'Ocak': '01',
+            'Şub': '02', 'Şubat': '02',
+            'Mar': '03', 'Mart': '03',
+            'Nis': '04', 'Nisan': '04',
+            'May': '05', 'Mayıs': '05',
+            'Haz': '06', 'Haziran': '06',
+            'Tem': '07', 'Temmuz': '07',
+            'Ağu': '08', 'Ağustos': '08',
+            'Eyl': '09', 'Eylül': '09',
+            'Eki': '10', 'Ekim': '10',
+            'Kas': '11', 'Kasım': '11',
+            'Ara': '12', 'Aralık': '12',
+          };
+          
+          String? month = monthMap[monthStr];
+          if (month != null) {
+            return '$year-$month';
+          }
+        }
+      }
+      // Format: "2025-01-31" veya "2025-01"
+      else if (dateStr.contains('-')) {
+        List<String> parts = dateStr.split('-');
+        if (parts.length >= 2) {
+          String year = parts[0];
+          String month = parts[1];
+          return '$year-${month.padLeft(2, '0')}';
+        }
+      }
+    } catch (e) {
+      print('Tarih parse hatası: $dateStr - $e');
+    }
+    return null;
   }
 
   Widget buildTopSection() {
@@ -481,29 +573,10 @@ class _AnaGruplarPageState extends State<AnaGruplarPage> {
                 }
 
                 // Y-axis için dinamik aralık hesaplama
-                double minY = double.infinity;
-                double maxY = double.negativeInfinity;
-
-                for (var series in chartData.values) {
-                  for (var spot in series) {
-                    if (spot.y < minY) minY = spot.y;
-                    if (spot.y > maxY) maxY = spot.y;
-                  }
-                }
-
-                double range = maxY - minY;
-                double interval = 5.0;
-                if (range <= 20) {
-                  interval = 2.0;
-                } else if (range <= 50) {
-                  interval = 5.0;
-                } else if (range <= 100) {
-                  interval = 10.0;
-                } else if (range <= 200) {
-                  interval = 15.0;
-                } else {
-                  interval = 20.0;
-                }
+                double interval = _calculateMultiEndeksInterval(chartData);
+                // Y ekseni sınırlarını hesapla
+                Map<String, double> yAxisBounds =
+                    _calculateMultiEndeksYAxisBounds(chartData, interval);
 
                 return Column(
                   children: [
@@ -536,6 +609,8 @@ class _AnaGruplarPageState extends State<AnaGruplarPage> {
                     Expanded(
                       child: LineChart(
                         LineChartData(
+                          minY: yAxisBounds['minY'],
+                          maxY: yAxisBounds['maxY'],
                           gridData: FlGridData(show: false),
                           titlesData: FlTitlesData(
                             leftTitles: AxisTitles(
@@ -544,7 +619,18 @@ class _AnaGruplarPageState extends State<AnaGruplarPage> {
                                 reservedSize: 60,
                                 interval: interval,
                                 getTitlesWidget: (value, meta) {
-                                  if (interval >= 10.0) {
+                                  // Interval'e göre format belirle
+                                  if (interval >= 25.0) {
+                                    return Text(
+                                      value.toInt().toString(),
+                                      style: const TextStyle(fontSize: 10),
+                                    );
+                                  } else if (interval >= 10.0) {
+                                    return Text(
+                                      value.toInt().toString(),
+                                      style: const TextStyle(fontSize: 10),
+                                    );
+                                  } else if (interval >= 5.0) {
                                     return Text(
                                       value.toInt().toString(),
                                       style: const TextStyle(fontSize: 10),
@@ -701,6 +787,12 @@ class _AnaGruplarPageState extends State<AnaGruplarPage> {
                   );
                 }
 
+                // Dinamik interval hesapla
+                double interval = _calculateMultiSeriesInterval(chartData);
+                // Y ekseni sınırlarını hesapla
+                Map<String, double> yAxisBounds =
+                    _calculateMultiSeriesYAxisBounds(chartData, interval);
+
                 return Column(
                   children: [
                     // Legend
@@ -732,18 +824,33 @@ class _AnaGruplarPageState extends State<AnaGruplarPage> {
                     Expanded(
                       child: LineChart(
                         LineChartData(
+                          minY: yAxisBounds['minY'],
+                          maxY: yAxisBounds['maxY'],
                           gridData: FlGridData(show: false),
                           titlesData: FlTitlesData(
                             leftTitles: AxisTitles(
                               sideTitles: SideTitles(
                                 showTitles: true,
                                 reservedSize: 60,
-                                interval: 1.0,
+                                interval: interval,
                                 getTitlesWidget: (value, meta) {
-                                  return Text(
-                                    value.toStringAsFixed(1),
-                                    style: const TextStyle(fontSize: 10),
-                                  );
+                                  // Interval'e göre format belirle
+                                  if (interval >= 10.0) {
+                                    return Text(
+                                      value.toInt().toString(),
+                                      style: const TextStyle(fontSize: 10),
+                                    );
+                                  } else if (interval >= 2.0) {
+                                    return Text(
+                                      value.toStringAsFixed(0),
+                                      style: const TextStyle(fontSize: 10),
+                                    );
+                                  } else {
+                                    return Text(
+                                      value.toStringAsFixed(1),
+                                      style: const TextStyle(fontSize: 10),
+                                    );
+                                  }
                                 },
                               ),
                             ),
@@ -775,11 +882,31 @@ class _AnaGruplarPageState extends State<AnaGruplarPage> {
                                       : 'TÜİK $selectedGrup';
                                   final index = touchedSpot.x.toInt();
 
+                                  // TÜİK verisi yoksa tooltip gösterme
+                                  if (barIndex == 1 && touchedSpot.y.isNaN) {
+                                    return null;
+                                  }
+
                                   // Tarih bilgisini al
                                   String dateInfo = '';
                                   if (index >= 0 &&
                                       index < comparisonDates.length) {
-                                    dateInfo = '${comparisonDates[index]}\n';
+                                    String dateStr = comparisonDates[index];
+                                    // "YYYY-MM" formatını daha okunabilir formata çevir
+                                    try {
+                                      List<String> parts = dateStr.split('-');
+                                      if (parts.length == 2) {
+                                        int month = int.parse(parts[1]);
+                                        String year = parts[0];
+                                        const months = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
+                                          'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+                                        dateInfo = '${months[month - 1]} $year\n';
+                                      } else {
+                                        dateInfo = '$dateStr\n';
+                                      }
+                                    } catch (e) {
+                                      dateInfo = '$dateStr\n';
+                                    }
                                   }
 
                                   return LineTooltipItem(
@@ -791,7 +918,7 @@ class _AnaGruplarPageState extends State<AnaGruplarPage> {
                                       fontWeight: FontWeight.bold,
                                     ),
                                   );
-                                }).toList();
+                                }).where((item) => item != null).cast<LineTooltipItem>().toList();
                               },
                             ),
                           ),
@@ -839,5 +966,195 @@ class _AnaGruplarPageState extends State<AnaGruplarPage> {
     }
 
     return '$selectedGrup Endeksi';
+  }
+
+  /// Endeks grafikleri için dinamik interval hesaplar
+  double _calculateEndeksInterval(List<FlSpot> spots) {
+    if (spots.isEmpty) return 5.0;
+
+    double minY = double.infinity;
+    double maxY = double.negativeInfinity;
+
+    for (var spot in spots) {
+      if (spot.y < minY) minY = spot.y;
+      if (spot.y > maxY) maxY = spot.y;
+    }
+
+    double range = maxY - minY;
+    
+    if (range <= 10) {
+      return 2.0;
+    } else if (range <= 25) {
+      return 5.0;
+    } else if (range <= 50) {
+      return 10.0;
+    } else if (range <= 100) {
+      return 15.0;
+    } else if (range <= 200) {
+      return 25.0;
+    } else if (range <= 400) {
+      return 50.0;
+    } else {
+      return 100.0;
+    }
+  }
+
+  /// Birden fazla endeks serisi için dinamik interval hesaplar
+  double _calculateMultiEndeksInterval(Map<String, List<FlSpot>> chartData) {
+    if (chartData.isEmpty) return 5.0;
+
+    double minY = double.infinity;
+    double maxY = double.negativeInfinity;
+
+    for (var series in chartData.values) {
+      for (var spot in series) {
+        if (spot.y < minY) minY = spot.y;
+        if (spot.y > maxY) maxY = spot.y;
+      }
+    }
+
+    double range = maxY - minY;
+    
+    if (range <= 10) {
+      return 2.0;
+    } else if (range <= 25) {
+      return 5.0;
+    } else if (range <= 50) {
+      return 10.0;
+    } else if (range <= 100) {
+      return 15.0;
+    } else if (range <= 200) {
+      return 25.0;
+    } else if (range <= 400) {
+      return 50.0;
+    } else {
+      return 100.0;
+    }
+  }
+
+  /// Aylık değişim grafikleri için dinamik interval hesaplar
+  double _calculateMonthlyChangeInterval(List<FlSpot> spots) {
+    if (spots.isEmpty) return 1.0;
+
+    double minY = double.infinity;
+    double maxY = double.negativeInfinity;
+
+    for (var spot in spots) {
+      if (spot.y < minY) minY = spot.y;
+      if (spot.y > maxY) maxY = spot.y;
+    }
+
+    double range = maxY - minY;
+    
+    if (range <= 5) {
+      return 0.5;
+    } else if (range <= 10) {
+      return 1.0;
+    } else if (range <= 20) {
+      return 2.0;
+    } else if (range <= 40) {
+      return 5.0;
+    } else if (range <= 80) {
+      return 10.0;
+    } else {
+      return 20.0;
+    }
+  }
+
+  /// Birden fazla seri için dinamik interval hesaplar
+  double _calculateMultiSeriesInterval(Map<String, List<FlSpot>> chartData) {
+    if (chartData.isEmpty) return 1.0;
+
+    double minY = double.infinity;
+    double maxY = double.negativeInfinity;
+
+    for (var series in chartData.values) {
+      for (var spot in series) {
+        if (spot.y < minY) minY = spot.y;
+        if (spot.y > maxY) maxY = spot.y;
+      }
+    }
+
+    double range = maxY - minY;
+    
+    if (range <= 5) {
+      return 0.5;
+    } else if (range <= 10) {
+      return 1.0;
+    } else if (range <= 20) {
+      return 2.0;
+    } else if (range <= 40) {
+      return 5.0;
+    } else if (range <= 80) {
+      return 10.0;
+    } else {
+      return 20.0;
+    }
+  }
+
+  /// Y ekseni için min ve max değerleri interval'e göre ayarlar (çakışmayı önlemek için)
+  Map<String, double> _calculateYAxisBounds(List<FlSpot> spots, double interval) {
+    if (spots.isEmpty) {
+      return {'minY': 0.0, 'maxY': 100.0};
+    }
+
+    double minY = double.infinity;
+    double maxY = double.negativeInfinity;
+
+    for (var spot in spots) {
+      if (spot.y < minY) minY = spot.y;
+      if (spot.y > maxY) maxY = spot.y;
+    }
+
+    double adjustedMinY = (minY / interval).floor() * interval;
+    double adjustedMaxY = (maxY / interval).ceil() * interval + interval;
+
+    return {'minY': adjustedMinY, 'maxY': adjustedMaxY};
+  }
+
+  /// Birden fazla seri için Y ekseni min ve max değerlerini hesaplar
+  Map<String, double> _calculateMultiSeriesYAxisBounds(
+      Map<String, List<FlSpot>> chartData, double interval) {
+    if (chartData.isEmpty) {
+      return {'minY': 0.0, 'maxY': 100.0};
+    }
+
+    double minY = double.infinity;
+    double maxY = double.negativeInfinity;
+
+    for (var series in chartData.values) {
+      for (var spot in series) {
+        if (spot.y < minY) minY = spot.y;
+        if (spot.y > maxY) maxY = spot.y;
+      }
+    }
+
+    double adjustedMinY = (minY / interval).floor() * interval;
+    double adjustedMaxY = (maxY / interval).ceil() * interval + interval;
+
+    return {'minY': adjustedMinY, 'maxY': adjustedMaxY};
+  }
+
+  /// Birden fazla endeks serisi için Y ekseni min ve max değerlerini hesaplar
+  Map<String, double> _calculateMultiEndeksYAxisBounds(
+      Map<String, List<FlSpot>> chartData, double interval) {
+    if (chartData.isEmpty) {
+      return {'minY': 0.0, 'maxY': 100.0};
+    }
+
+    double minY = double.infinity;
+    double maxY = double.negativeInfinity;
+
+    for (var series in chartData.values) {
+      for (var spot in series) {
+        if (spot.y < minY) minY = spot.y;
+        if (spot.y > maxY) maxY = spot.y;
+      }
+    }
+
+    double adjustedMinY = (minY / interval).floor() * interval;
+    double adjustedMaxY = (maxY / interval).ceil() * interval + interval;
+
+    return {'minY': adjustedMinY, 'maxY': adjustedMaxY};
   }
 }

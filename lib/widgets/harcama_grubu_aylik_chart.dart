@@ -161,17 +161,23 @@ class _HarcamaGrubuAylikChartState extends State<HarcamaGrubuAylikChart> {
     // Y ekseni interval'ını dinamik olarak hesapla
     double yRange = maxY - minY;
     double yInterval;
-    if (yRange <= 10) {
+    if (yRange <= 5) {
+      yInterval = 0.5;
+    } else if (yRange <= 10) {
+      yInterval = 1.0;
+    } else if (yRange <= 20) {
       yInterval = 2.0;
-    } else if (yRange <= 30) {
+    } else if (yRange <= 40) {
       yInterval = 5.0;
-    } else if (yRange <= 60) {
+    } else if (yRange <= 80) {
       yInterval = 10.0;
-    } else if (yRange <= 100) {
-      yInterval = 15.0;
     } else {
       yInterval = 20.0;
     }
+
+    // Y ekseni sınırlarını interval'e göre ayarla
+    double adjustedMinY = (minY / yInterval).floor() * yInterval;
+    double adjustedMaxY = (maxY / yInterval).ceil() * yInterval + yInterval;
 
     bool hasTuikData = tuikMap.isNotEmpty;
 
@@ -235,10 +241,15 @@ class _HarcamaGrubuAylikChartState extends State<HarcamaGrubuAylikChart> {
                         showTitles: true,
                         interval: yInterval,
                         getTitlesWidget: (value, meta) {
-                          // Büyük interval'larda tam sayı, küçüklerde ondalık göster
-                          String displayValue = yInterval >= 5.0
-                              ? value.toInt().toString()
-                              : value.toStringAsFixed(1);
+                          // Interval'e göre format belirle
+                          String displayValue;
+                          if (yInterval >= 10.0) {
+                            displayValue = value.toInt().toString();
+                          } else if (yInterval >= 2.0) {
+                            displayValue = value.toStringAsFixed(0);
+                          } else {
+                            displayValue = value.toStringAsFixed(1);
+                          }
                           return Text(
                             displayValue,
                             style: const TextStyle(
@@ -294,8 +305,8 @@ class _HarcamaGrubuAylikChartState extends State<HarcamaGrubuAylikChart> {
                   ),
                   minX: 0,
                   maxX: allDates.length.toDouble() - 1,
-                  minY: minY,
-                  maxY: maxY,
+                  minY: adjustedMinY,
+                  maxY: adjustedMaxY,
                   lineBarsData: [
                     // Web TÜFE çizgisi (Mavi)
                     LineChartBarData(

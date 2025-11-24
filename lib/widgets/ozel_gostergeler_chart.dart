@@ -334,17 +334,25 @@ class _OzelGostergelerChartState extends State<OzelGostergelerChart> {
 
         double range = maxY - minY;
         double interval = 5.0;
-        if (range <= 20) {
+        if (range <= 10) {
           interval = 2.0;
-        } else if (range <= 50) {
+        } else if (range <= 25) {
           interval = 5.0;
-        } else if (range <= 100) {
+        } else if (range <= 50) {
           interval = 10.0;
-        } else if (range <= 200) {
+        } else if (range <= 100) {
           interval = 15.0;
+        } else if (range <= 200) {
+          interval = 25.0;
+        } else if (range <= 400) {
+          interval = 50.0;
         } else {
-          interval = 20.0;
+          interval = 100.0;
         }
+
+        // Y ekseni sınırlarını interval'e göre ayarla
+        double adjustedMinY = (minY / interval).floor() * interval;
+        double adjustedMaxY = (maxY / interval).ceil() * interval + interval;
 
         return Container(
           padding: const EdgeInsets.all(16),
@@ -390,6 +398,8 @@ class _OzelGostergelerChartState extends State<OzelGostergelerChart> {
                 height: 350,
                 child: LineChart(
                   LineChartData(
+                    minY: adjustedMinY,
+                    maxY: adjustedMaxY,
                     gridData: FlGridData(show: false),
                     titlesData: FlTitlesData(
                       leftTitles: AxisTitles(
@@ -398,7 +408,18 @@ class _OzelGostergelerChartState extends State<OzelGostergelerChart> {
                           reservedSize: 60,
                           interval: interval,
                           getTitlesWidget: (value, meta) {
-                            if (interval >= 10.0) {
+                            // Interval'e göre format belirle
+                            if (interval >= 25.0) {
+                              return Text(
+                                value.toInt().toString(),
+                                style: const TextStyle(fontSize: 10),
+                              );
+                            } else if (interval >= 10.0) {
+                              return Text(
+                                value.toInt().toString(),
+                                style: const TextStyle(fontSize: 10),
+                              );
+                            } else if (interval >= 5.0) {
                               return Text(
                                 value.toInt().toString(),
                                 style: const TextStyle(fontSize: 10),
@@ -498,16 +519,24 @@ class _OzelGostergelerChartState extends State<OzelGostergelerChart> {
     List<double> webTufeValues = [];
     List<double> tuikValues = [];
 
-    // Web TÜFE verilerini al
+    // Web TÜFE verilerini al ve tarihleri parse et
     Map<String, double> webTufeMap = {};
+    List<MapEntry<String, String>> webTufeDateList = []; // "YYYY-MM" -> original date
     for (int i = 0;
         i < widget.data.monthlyDates.length &&
             i < widget.data.monthlyChanges.length;
         i++) {
-      webTufeMap[widget.data.monthlyDates[i]] = widget.data.monthlyChanges[i];
+      String originalDate = widget.data.monthlyDates[i];
+      String? yearMonth = _parseDateToYearMonth(originalDate);
+      if (yearMonth != null) {
+        webTufeMap[yearMonth] = widget.data.monthlyChanges[i];
+        webTufeDateList.add(MapEntry(yearMonth, originalDate));
+      }
     }
+    // Tarihe göre sırala
+    webTufeDateList.sort((a, b) => a.key.compareTo(b.key));
 
-    // TÜİK verilerini al
+    // TÜİK verilerini al ve parse et
     Map<String, double> tuikMap = {};
     if (tuikData['dates'] != null && tuikData['data'] != null) {
       List<String> tuikDates = List<String>.from(tuikData['dates']);
@@ -519,19 +548,24 @@ class _OzelGostergelerChartState extends State<OzelGostergelerChart> {
         for (int i = 0;
             i < tuikDates.length && i < tuikDataValues.length;
             i++) {
-          tuikMap[tuikDates[i]] = tuikDataValues[i];
+          String? yearMonth = _parseDateToYearMonth(tuikDates[i]);
+          if (yearMonth != null) {
+            tuikMap[yearMonth] = tuikDataValues[i];
+          }
         }
       }
     }
 
-    // Ortak tarih listesi oluştur (daha uzun olanı kullan)
-    Set<String> allDatesSet = {...webTufeMap.keys, ...tuikMap.keys};
-    allDates = allDatesSet.toList()..sort();
+    // Web TÜFE tarihlerini kullan (tüm tarihler)
+    allDates = webTufeDateList.map((e) => e.value).toList();
 
     // Her tarih için değerleri hazırla
-    for (String date in allDates) {
-      webTufeValues.add(webTufeMap[date] ?? 0.0);
-      tuikValues.add(tuikMap[date] ?? double.nan); // Eksik veri için NaN kullan
+    for (var entry in webTufeDateList) {
+      String yearMonth = entry.key;
+      webTufeValues.add(webTufeMap[yearMonth] ?? 0.0);
+      // TÜİK verisi varsa ekle, yoksa NaN kullan (gösterilmeyecek)
+      double? tuikValue = tuikMap[yearMonth];
+      tuikValues.add(tuikValue ?? double.nan);
     }
 
     if (allDates.isEmpty) {
@@ -565,17 +599,23 @@ class _OzelGostergelerChartState extends State<OzelGostergelerChart> {
     // Y ekseni interval'ını dinamik olarak hesapla
     double yRange = maxY - minY;
     double yInterval;
-    if (yRange <= 10) {
+    if (yRange <= 5) {
+      yInterval = 0.5;
+    } else if (yRange <= 10) {
+      yInterval = 1.0;
+    } else if (yRange <= 20) {
       yInterval = 2.0;
-    } else if (yRange <= 30) {
+    } else if (yRange <= 40) {
       yInterval = 5.0;
-    } else if (yRange <= 60) {
+    } else if (yRange <= 80) {
       yInterval = 10.0;
-    } else if (yRange <= 100) {
-      yInterval = 15.0;
     } else {
       yInterval = 20.0;
     }
+
+    // Y ekseni sınırlarını interval'e göre ayarla
+    double adjustedMinY = (minY / yInterval).floor() * yInterval;
+    double adjustedMaxY = (maxY / yInterval).ceil() * yInterval + yInterval;
 
     bool hasTuikData = tuikMap.isNotEmpty;
 
@@ -638,10 +678,15 @@ class _OzelGostergelerChartState extends State<OzelGostergelerChart> {
                       reservedSize: 60,
                       interval: yInterval,
                       getTitlesWidget: (value, meta) {
-                        // Büyük interval'larda tam sayı, küçüklerde ondalık göster
-                        String displayValue = yInterval >= 5.0
-                            ? value.toInt().toString()
-                            : value.toStringAsFixed(1);
+                        // Interval'e göre format belirle
+                        String displayValue;
+                        if (yInterval >= 10.0) {
+                          displayValue = value.toInt().toString();
+                        } else if (yInterval >= 2.0) {
+                          displayValue = value.toStringAsFixed(0);
+                        } else {
+                          displayValue = value.toStringAsFixed(1);
+                        }
                         return Text(
                           displayValue,
                           style: const TextStyle(
@@ -691,8 +736,8 @@ class _OzelGostergelerChartState extends State<OzelGostergelerChart> {
                 ),
                 minX: 0,
                 maxX: allDates.length.toDouble() - 1,
-                minY: minY,
-                maxY: maxY,
+                minY: adjustedMinY,
+                maxY: adjustedMaxY,
                 lineBarsData: [
                   // Web TÜFE çizgisi (Mavi)
                   LineChartBarData(
@@ -752,6 +797,12 @@ class _OzelGostergelerChartState extends State<OzelGostergelerChart> {
                     getTooltipItems: (List<LineBarSpot> touchedSpots) {
                       return touchedSpots.map((LineBarSpot touchedSpot) {
                         final index = touchedSpot.x.toInt();
+                        
+                        // TÜİK verisi yoksa tooltip gösterme
+                        if (touchedSpot.barIndex == 1 && touchedSpot.y.isNaN) {
+                          return null;
+                        }
+                        
                         if (index >= 0 && index < allDates.length) {
                           String date = allDates[index];
                           String source =
@@ -769,7 +820,7 @@ class _OzelGostergelerChartState extends State<OzelGostergelerChart> {
                           );
                         }
                         return null;
-                      }).toList();
+                      }).where((item) => item != null).cast<LineTooltipItem>().toList();
                     },
                   ),
                 ),
@@ -803,5 +854,61 @@ class _OzelGostergelerChartState extends State<OzelGostergelerChart> {
         ),
       ],
     );
+  }
+
+  /// Tarih string'ini "YYYY-MM" formatına çevirir
+  String? _parseDateToYearMonth(String dateStr) {
+    try {
+      // Format: "dd.mm.yyyy"
+      if (dateStr.contains('.')) {
+        List<String> parts = dateStr.split('.');
+        if (parts.length == 3) {
+          String day = parts[0];
+          String month = parts[1];
+          String year = parts[2];
+          return '$year-${month.padLeft(2, '0')}';
+        }
+      }
+      // Format: "Oca 2025" veya "Ocak 2025"
+      else if (dateStr.contains(' ')) {
+        List<String> parts = dateStr.split(' ');
+        if (parts.length == 2) {
+          String monthStr = parts[0];
+          String year = parts[1];
+          
+          Map<String, String> monthMap = {
+            'Oca': '01', 'Ocak': '01',
+            'Şub': '02', 'Şubat': '02',
+            'Mar': '03', 'Mart': '03',
+            'Nis': '04', 'Nisan': '04',
+            'May': '05', 'Mayıs': '05',
+            'Haz': '06', 'Haziran': '06',
+            'Tem': '07', 'Temmuz': '07',
+            'Ağu': '08', 'Ağustos': '08',
+            'Eyl': '09', 'Eylül': '09',
+            'Eki': '10', 'Ekim': '10',
+            'Kas': '11', 'Kasım': '11',
+            'Ara': '12', 'Aralık': '12',
+          };
+          
+          String? month = monthMap[monthStr];
+          if (month != null) {
+            return '$year-$month';
+          }
+        }
+      }
+      // Format: "2025-01-31" veya "2025-01"
+      else if (dateStr.contains('-')) {
+        List<String> parts = dateStr.split('-');
+        if (parts.length >= 2) {
+          String year = parts[0];
+          String month = parts[1];
+          return '$year-${month.padLeft(2, '0')}';
+        }
+      }
+    } catch (e) {
+      print('Tarih parse hatası: $dateStr - $e');
+    }
+    return null;
   }
 }

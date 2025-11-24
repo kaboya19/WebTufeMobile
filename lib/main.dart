@@ -106,17 +106,54 @@ class _TufeHomePageState extends State<TufeHomePage> {
   bool isDataOutdated = false;
   String? lastDataDate;
   String? displayedDataDate;
+  List<String> availableDates = [];
+  String? selectedDate;
 
   @override
   void initState() {
     super.initState();
-    loadCSVData();
+    _initializeData();
+  }
+
+  Future<void> _initializeData() async {
+    try {
+      // Önce tarih listesini yükle
+      final dates = await CSVService.getAvailableDates();
+      String? initialDate;
+      if (dates.isNotEmpty) {
+        initialDate = dates.last; // En son tarih
+      }
+      
+      setState(() {
+        availableDates = dates;
+        selectedDate = initialDate;
+      });
+      
+      // Verileri yükle
+      await loadCSVData();
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+        errorMessage = e.toString();
+      });
+    }
   }
 
   Future<void> loadCSVData() async {
     try {
-      final data = await CSVService.loadTufeData();
-      final month = await CSVService.getMonthFromCSV();
+      List<TufeData> data;
+      String month;
+      
+      if (selectedDate != null) {
+        // Seçili tarih için veri yükle
+        data = await CSVService.loadTufeDataForDate(selectedDate!);
+        month = CSVService.getMonthFromDate(selectedDate!);
+      } else {
+        // Son tarih için veri yükle
+        data = await CSVService.loadTufeData();
+        month = await CSVService.getMonthFromCSV();
+      }
+      
       final dataFreshness = await _checkDataFreshness();
       
       setState(() {
@@ -353,40 +390,116 @@ class _TufeHomePageState extends State<TufeHomePage> {
                             border: Border.all(color: Colors.orange.shade300),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: Row(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Icon(
-                                Icons.warning_amber_outlined,
-                                color: Colors.orange.shade700,
-                                size: 24,
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.warning_amber_outlined,
+                                    color: Colors.orange.shade700,
+                                    size: 24,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Veriler Güncel Değil',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.orange.shade800,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          displayedDataDate != null 
+                                            ? 'Ekrandaki veri: $displayedDataDate\nEn güncel veri: $lastDataDate'
+                                            : 'Son veri tarihi: $lastDataDate\nVeriler güncel değil.',
+                                          style: TextStyle(
+                                            color: Colors.orange.shade700,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
                               ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Veriler Güncel Değil',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.orange.shade800,
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      displayedDataDate != null 
-                                        ? 'Ekrandaki veri: $displayedDataDate\nEn güncel veri: $lastDataDate'
-                                        : 'Son veri tarihi: $lastDataDate\nVeriler güncel değil.',
-                                      style: TextStyle(
-                                        color: Colors.orange.shade700,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ],
+                              const SizedBox(height: 12),
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton.icon(
+                                  onPressed: isLoading ? null : _refreshData,
+                                  icon: const Icon(Icons.refresh, size: 18),
+                                  label: const Text('Yenile Butonuna Tıklayarak Güncel Verileri Yükleyin'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.orange.shade600,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                  ),
                                 ),
                               ),
                             ],
+                          ),
+                        ),
+                      ],
+                      // Tarih seçici
+                      if (availableDates.isNotEmpty) ...[
+                        Container(
+                          margin: const EdgeInsets.only(bottom: 16),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade50,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.grey.shade300),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.calendar_today, size: 20, color: Colors.blue),
+                                const SizedBox(width: 12),
+                                const Text(
+                                  'Tarih Seç:',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: DropdownButton<String>(
+                                    value: selectedDate,
+                                    isExpanded: true,
+                                    underline: const SizedBox(),
+                                    items: availableDates.map((String date) {
+                                      String displayText = date;
+                                      try {
+                                        DateTime dateTime = DateTime.parse(date);
+                                        displayText = '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}';
+                                      } catch (e) {
+                                        // Tarih parse edilemezse olduğu gibi göster
+                                      }
+                                      return DropdownMenuItem<String>(
+                                        value: date,
+                                        child: Text(displayText),
+                                      );
+                                    }).toList(),
+                                    onChanged: (String? newDate) {
+                                      if (newDate != null && newDate != selectedDate) {
+                                        setState(() {
+                                          selectedDate = newDate;
+                                          isLoading = true;
+                                        });
+                                        loadCSVData();
+                                      }
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ],
