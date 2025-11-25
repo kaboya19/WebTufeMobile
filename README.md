@@ -10,7 +10,72 @@ Bu proje, webtufe.com sitesinin mobil versiyonudur. Turkish Consumer Price Index
 - 🎨 Web sitesine benzer tasarım
 
 ## Projeyi Çalıştırma
-https://kaboya19.github.io/WebTufeMobile/
+
+### Web Versiyonu
+Canlı web versiyonu: https://kaboya19.github.io/WebTufeMobile/
+
+### Lokal Geliştirme Ortamında Çalıştırma
+
+#### Gereksinimler
+1. **Flutter SDK** (3.4.3 veya üzeri)
+   - Flutter'ı [flutter.dev](https://flutter.dev/docs/get-started/install) adresinden indirip yükleyin
+   - Windows için: Flutter SDK'yı indirin ve PATH'e ekleyin
+
+2. **Geliştirme Ortamı**
+   - Android Studio / VS Code (Flutter eklentileri ile)
+   - Veya herhangi bir kod editörü + terminal
+
+#### Kurulum Adımları
+
+1. **Projeyi klonlayın veya indirin**
+   ```bash
+   git clone https://github.com/kaboya19/WebTufeMobile.git
+   cd WebTufeMobile
+   ```
+
+2. **Flutter bağımlılıklarını yükleyin**
+   ```bash
+   flutter pub get
+   ```
+
+3. **Flutter kurulumunu kontrol edin**
+   ```bash
+   flutter doctor
+   ```
+   Bu komut eksik bileşenleri (Android SDK, VS Code eklentileri vb.) gösterir.
+
+4. **Uygulamayı çalıştırın**
+
+   **Web tarayıcısında:**
+   ```bash
+   flutter run -d chrome
+   ```
+   veya
+   ```bash
+   flutter run -d web-server
+   ```
+
+   **Android emülatörde:**
+   ```bash
+   flutter run
+   ```
+   (Önce bir Android emülatör başlatmanız gerekir)
+
+   **Belirli bir cihazda:**
+   ```bash
+   flutter devices  # Mevcut cihazları listeler
+   flutter run -d <device-id>
+   ```
+
+#### Hızlı Başlangıç
+```bash
+# Bağımlılıkları yükle
+flutter pub get
+
+# Web'de çalıştır
+flutter run -d chrome
+```
+
 ## Ekran Görüntüleri
 
 Ana ekran, TÜFE verilerini şu şekilde gösterir:
