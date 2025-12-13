@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'models/tufe_data.dart';
 import 'services/csv_service.dart';
 import 'services/github_csv_service.dart';
@@ -9,8 +11,41 @@ import 'pages/harcama_gruplari_page.dart';
 import 'pages/maddeler_page.dart';
 import 'pages/ozel_gostergeler_page.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Uygulama başlangıcında versiyon kontrolü yap ve cache'i temizle
+  await _checkAndClearCacheOnVersionChange();
+  
   runApp(const MyApp());
+}
+
+/// Versiyon değişikliğini kontrol eder ve gerekirse cache'i temizler
+Future<void> _checkAndClearCacheOnVersionChange() async {
+  try {
+    final packageInfo = await PackageInfo.fromPlatform();
+    final currentVersion = '${packageInfo.version}+${packageInfo.buildNumber}';
+    
+    final prefs = await SharedPreferences.getInstance();
+    final lastVersion = prefs.getString('last_app_version');
+    
+    // Versiyon değiştiyse veya ilk açılışsa cache'i temizle
+    if (lastVersion != currentVersion) {
+      print('Versiyon değişti: $lastVersion -> $currentVersion');
+      print('Cache temizleniyor...');
+      GitHubCSVService.clearCache();
+      
+      // Yeni versiyonu kaydet
+      await prefs.setString('last_app_version', currentVersion);
+      print('Cache temizlendi ve yeni versiyon kaydedildi: $currentVersion');
+    } else {
+      print('Versiyon aynı: $currentVersion, cache temizlenmedi');
+    }
+  } catch (e) {
+    print('Versiyon kontrolü hatası: $e');
+    // Hata durumunda da cache'i temizle (güvenli tarafta olmak için)
+    GitHubCSVService.clearCache();
+  }
 }
 
 class MyApp extends StatelessWidget {
