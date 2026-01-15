@@ -1,6 +1,10 @@
+import Constants from 'expo-constants';
+
 export class NewsletterService {
   // Google Apps Script Web App (Exec URL)
+  // Environment variable'dan al, yoksa fallback kullan
   private static readonly ENDPOINT =
+    Constants.expoConfig?.extra?.newsletterEndpoint ||
     'https://script.google.com/macros/s/AKfycbz72ylaiLL2Y4mYKx94rvuYvcWmAlhzTrp9SDLuBco6waFmx4CXSBN1zjYK518h6TbBLw/exec';
 
   static async subscribe(email: string): Promise<{ok: boolean; message: string}> {

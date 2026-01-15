@@ -34,6 +34,7 @@ export default {
       eas: {
         projectId: '1563fcb5-b2a9-4a6b-b0b2-e7f9dfbd8328',
       },
+      newsletterEndpoint: process.env.NEWSLETTER_ENDPOINT || 'https://script.google.com/macros/s/AKfycbz72ylaiLL2Y4mYKx94rvuYvcWmAlhzTrp9SDLuBco6waFmx4CXSBN1zjYK518h6TbBLw/exec',
     },
   },
 };
