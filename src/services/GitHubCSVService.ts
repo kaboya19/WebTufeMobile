@@ -120,11 +120,6 @@ export class GitHubCSVService {
   }
 
   private static async loadAssetFile(fileName: string): Promise<string> {
-    // Katkı CSV için yerleşik fallback
-    if (fileNameAlternatives['katkıpayları.csv']?.includes(fileName)) {
-      return LOCAL_KATKI_CSV;
-    }
-
     // GitHub'dan CSV dosyalarını okuma
     // Flutter versiyonunda assets klasöründen okunuyordu,
     // React Native versiyonunda GitHub'dan fetch ile okuyoruz
@@ -146,6 +141,12 @@ export class GitHubCSVService {
         // Bu dosya adı çalışmadı, bir sonrakini dene
         continue;
       }
+    }
+    
+    // Katkı CSV için fallback (sadece GitHub'dan okunamazsa)
+    if (fileNameAlternatives['katkıpayları.csv']?.includes(fileName)) {
+      console.log(`Katkı CSV GitHub'dan okunamadı, fallback kullanılıyor`);
+      return LOCAL_KATKI_CSV;
     }
     
     // Hiçbiri çalışmadıysa hata fırlat
