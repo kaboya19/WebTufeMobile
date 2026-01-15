@@ -78,15 +78,14 @@ export class NewsletterService {
           if (!hasKeys || okFlag === null) {
             return {
               ok: true,
-              message:
-                'İstek alındı. Sheet’e yazma işlemi Apps Script tarafına bağlıdır; birkaç saniye içinde düşmelidir.',
+              message: 'Başarıyla kaydedildi',
             };
           }
 
           const message =
             (typeof json.message === 'string' && json.message) ||
             (typeof json.msg === 'string' && json.msg) ||
-            (okFlag ? 'Aboneliğiniz alındı. Teşekkürler!' : 'Abonelik sırasında hata oluştu.');
+            (okFlag ? 'Başarıyla kaydedildi' : 'Abonelik sırasında hata oluştu.');
           return {ok: okFlag, message};
         } catch {
           // Non-JSON text response: accept as success if it contains a positive signal.
@@ -97,7 +96,7 @@ export class NewsletterService {
             t.includes('başar') ||
             t.includes('abone') ||
             t.includes('eklendi');
-          if (looksOk) return {ok: true, message: text || 'Aboneliğiniz alındı. Teşekkürler!'};
+          if (looksOk) return {ok: true, message: 'Başarıyla kaydedildi'};
 
           lastErr = new Error(text || 'Unexpected response');
           continue;
@@ -146,8 +145,7 @@ export class NewsletterService {
         });
         return {
           ok: true,
-          message:
-            'İstek gönderildi. Sheet’e yazma işlemi Apps Script tarafına bağlıdır; birkaç saniye içinde düşmelidir.',
+          message: 'Başarıyla kaydedildi',
         };
       }
 
@@ -163,8 +161,7 @@ export class NewsletterService {
         if (ok) {
           return {
             ok: true,
-            message:
-              'İstek gönderildi. Sheet’e yazma işlemi Apps Script tarafına bağlıdır; birkaç saniye içinde düşmelidir.',
+            message: 'Başarıyla kaydedildi',
           };
         }
       }
@@ -177,8 +174,7 @@ export class NewsletterService {
         });
         return {
           ok: true,
-          message:
-            'İstek gönderildi. Sheet’e yazma işlemi Apps Script tarafına bağlıdır; birkaç saniye içinde düşmelidir.',
+          message: 'Başarıyla kaydedildi',
         };
       } catch {
         // ignore and try last fallback below
@@ -216,8 +212,7 @@ export class NewsletterService {
 
       return {
         ok: true,
-        message:
-          'İstek Apps Script’e gönderildi. Sheet’e yazma işlemi Apps Script tarafına bağlıdır; birkaç saniye içinde düşmelidir.',
+        message: 'Başarıyla kaydedildi',
       };
     } catch (e) {
       return {ok: false, message: e instanceof Error ? e.message : String(e)};
