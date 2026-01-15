@@ -1,8 +1,13 @@
 {
-  "root": "web-build",
+  "root": "dist",
   "clean_urls": false,
   "routes": {
     "/**": "index.html"
+  },
+  "headers": {
+    "/**": {
+      "Cache-Control": "public, max-age=3600"
+    }
   }
 }
 
