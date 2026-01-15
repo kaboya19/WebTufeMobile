@@ -1,0 +1,352 @@
+import Papa from 'papaparse';
+import {GitHubCSVService} from './GitHubCSVService';
+
+export class TuikService {
+  private static normalizeKey(s: string): string {
+    return (s || '')
+      .toLowerCase()
+      .trim()
+      .replace(/\u00a0/g, ' ')
+      .replace(/\s+/g, ' ')
+      .replace(/[’'"]/g, '')
+      .replace(/[(),.]/g, '')
+      .replace(/ğ/g, 'g')
+      .replace(/ü/g, 'u')
+      .replace(/ş/g, 's')
+      .replace(/ı/g, 'i')
+      .replace(/ö/g, 'o')
+      .replace(/ç/g, 'c');
+  }
+
+  private static findColumnIndex(headerRow: any[], columnName: string): number {
+    const target = this.normalizeKey(columnName);
+    // Direct match
+    for (let i = 0; i < headerRow.length; i++) {
+      const h = this.normalizeKey(headerRow[i]?.toString() || '');
+      if (h === target) return i;
+    }
+    // Fuzzy: contains
+    for (let i = 0; i < headerRow.length; i++) {
+      const h = this.normalizeKey(headerRow[i]?.toString() || '');
+      if (h && (h.includes(target) || target.includes(h))) return i;
+    }
+    return -1;
+  }
+
+  private static async loadTuikColumnFromCsv(
+    fileName: string,
+    columnName: string,
+    outputKey: string,
+    convertDateToDDMMYYYY: boolean
+  ): Promise<{dates: string[]; data: {[key: string]: number[]}}> {
+    try {
+      const csvData = await GitHubCSVService.loadCSVFromGitHub(fileName);
+      const lines = csvData.split(/\r?\n/);
+
+      if (lines.length === 0) return {dates: [], data: {}};
+
+      const parsedHeader = Papa.parse(lines[0], {
+        header: false,
+        skipEmptyLines: true,
+      });
+      const headerRow =
+        parsedHeader.data.length > 0 && Array.isArray(parsedHeader.data[0])
+          ? (parsedHeader.data[0] as any[])
+          : [];
+
+      const colIndex = this.findColumnIndex(headerRow, columnName);
+      if (colIndex === -1) return {dates: [], data: {}};
+
+      const dates: string[] = [];
+      const values: number[] = [];
+
+      for (let i = 1; i < lines.length; i++) {
+        if (!lines[i].trim()) continue;
+        try {
+          const parsed = Papa.parse(lines[i], {
+            header: false,
+            skipEmptyLines: true,
+          });
+          if (
+            parsed.data.length > 0 &&
+            Array.isArray(parsed.data[0]) &&
+            parsed.data[0].length > colIndex
+          ) {
+            const row = parsed.data[0] as any[];
+            let date = row[0]?.toString().trim() || '';
+
+            if (convertDateToDDMMYYYY) {
+              try {
+                const dateParts = date.split('-');
+                if (dateParts.length === 3) {
+                  date = `${dateParts[2]}.${dateParts[1]}.${dateParts[0]}`;
+                }
+              } catch (e) {
+                // keep original
+              }
+            }
+
+            const rawValue = row[colIndex]?.toString().trim() ?? '';
+            const v = parseFloat(rawValue || '0');
+            if (!Number.isFinite(v)) continue;
+
+            dates.push(date);
+            values.push(v);
+          }
+        } catch (e) {
+          // skip
+        }
+      }
+
+      return {
+        dates,
+        data: {
+          [outputKey]: values,
+        },
+      };
+    } catch (e) {
+      console.log('TÜİK kolon veri yükleme hatası:', e);
+      return {dates: [], data: {}};
+    }
+  }
+
+  // Ana gruplar (TÜİK) - endeks (tuikytd.csv)
+  static async loadTuikAnaGrupEndeksData(grupName: string): Promise<{
+    dates: string[];
+    data: {[key: string]: number[]};
+  }> {
+    // tuikytd.csv: YYYY-MM-DD tarihli ve ana grup kolonları mevcut
+    return await this.loadTuikColumnFromCsv(
+      'tuikytd.csv',
+      grupName,
+      `TÜİK ${grupName}`,
+      true
+    );
+  }
+
+  // Özel kapsamlı göstergeler (TÜİK) - endeks (tuikozelgostergelerytd.csv)
+  static async loadTuikOzelGostergeEndeksData(gostergeName: string): Promise<{
+    dates: string[];
+    data: {[key: string]: number[]};
+  }> {
+    // tuikozelgostergelerytd.csv: YYYY-MM-DD tarihli ve özel gösterge kolonları mevcut
+    return await this.loadTuikColumnFromCsv(
+      'tuikozelgostergelerytd.csv',
+      gostergeName,
+      `TÜİK ${gostergeName}`,
+      true
+    );
+  }
+
+  // Özel kapsamlı göstergeler (TÜİK) - aylık değişim (tuikozelgostergeler.csv)
+  static async loadTuikOzelGostergeData(gostergeName: string): Promise<{
+    dates: string[];
+    data: {[key: string]: number[]};
+  }> {
+    // tuikozelgostergeler.csv: YYYY-MM-DD tarihli ve özel gösterge kolonları mevcut
+    return await this.loadTuikColumnFromCsv(
+      'tuikozelgostergeler.csv',
+      gostergeName,
+      `TÜİK ${gostergeName}`,
+      true
+    );
+  }
+
+  // Ana gruplar (TÜİK) - aylık değişim (tuikaylik.csv)
+  static async loadTuikAnaGrupData(grupName: string): Promise<{
+    dates: string[];
+    data: {[key: string]: number[]};
+  }> {
+    // tuikaylik.csv: YYYY-MM-DD tarihli ve ana grup kolonları mevcut
+    // date conversion gerekmiyor; AnaGruplarPage year-month match yapıyor
+    return await this.loadTuikColumnFromCsv(
+      'tuikaylik.csv',
+      grupName,
+      `TÜİK ${grupName}`,
+      false
+    );
+  }
+
+  // Harcama grupları (TÜİK) - endeks (tuikytd.csv)
+  // Harcama grubu isimleri tuikytd.csv içinde kolon olarak yer alabilir (alt kırılımlar dahil).
+  static async loadTuikHarcamaGrubuEndeksData(harcamaGrubu: string): Promise<{
+    dates: string[];
+    data: {[key: string]: number[]};
+  }> {
+    return await this.loadTuikColumnFromCsv(
+      'tuikytd.csv',
+      harcamaGrubu,
+      `TÜİK ${harcamaGrubu}`,
+      true
+    );
+  }
+
+  // Harcama grupları (TÜİK) - aylık değişim (tuikaylik.csv)
+  static async loadTuikHarcamaGrubuData(harcamaGrubu: string): Promise<{
+    dates: string[];
+    data: {[key: string]: number[]};
+  }> {
+    return await this.loadTuikColumnFromCsv(
+      'tuikaylik.csv',
+      harcamaGrubu,
+      `TÜİK ${harcamaGrubu}`,
+      false
+    );
+  }
+
+  static async loadTuikAylikData(): Promise<{
+    dates: string[];
+    data: {[key: string]: number[]};
+  }> {
+    try {
+      const csvData = await GitHubCSVService.loadCSVFromGitHub('tuikaylik.csv');
+      const lines = csvData.split(/\r?\n/);
+
+      if (lines.length === 0) {
+        return {dates: [], data: {}};
+      }
+
+      const parsedHeader = Papa.parse(lines[0], {
+        header: false,
+        skipEmptyLines: true,
+      });
+      const headerRow =
+        parsedHeader.data.length > 0 && Array.isArray(parsedHeader.data[0])
+          ? (parsedHeader.data[0] as any[])
+          : [];
+
+      let genelColumnIndex = -1;
+      for (let i = 0; i < headerRow.length; i++) {
+        if (headerRow[i]?.toString().trim() === 'Genel') {
+          genelColumnIndex = i;
+          break;
+        }
+      }
+
+      if (genelColumnIndex === -1) {
+        return {dates: [], data: {}};
+      }
+
+      const dates: string[] = [];
+      const genelValues: number[] = [];
+
+      for (let i = 1; i < lines.length; i++) {
+        if (lines[i].trim()) {
+          try {
+            const parsed = Papa.parse(lines[i], {
+              header: false,
+              skipEmptyLines: true,
+            });
+            if (
+              parsed.data.length > 0 &&
+              Array.isArray(parsed.data[0]) &&
+              parsed.data[0].length > genelColumnIndex
+            ) {
+              const row = parsed.data[0] as any[];
+              const date = row[0]?.toString().trim() || '';
+              const value = parseFloat(row[genelColumnIndex]?.toString() || '0') || 0.0;
+
+              dates.push(date);
+              genelValues.push(value);
+            }
+          } catch (e) {
+            // Skip parse errors
+          }
+        }
+      }
+
+      return {
+        dates: dates,
+        data: {
+          'TÜİK TÜFE': genelValues,
+        },
+      };
+    } catch (e) {
+      console.log('TÜİK aylık veri yükleme hatası:', e);
+      return {dates: [], data: {}};
+    }
+  }
+
+  static async loadTuikEndeksData(): Promise<{
+    dates: string[];
+    data: {[key: string]: number[]};
+  }> {
+    try {
+      const csvData = await GitHubCSVService.loadCSVFromGitHub('tuikytd.csv');
+      const lines = csvData.split(/\r?\n/);
+
+      if (lines.length === 0) {
+        return {dates: [], data: {}};
+      }
+
+      const parsedHeader = Papa.parse(lines[0], {
+        header: false,
+        skipEmptyLines: true,
+      });
+      const headerRow =
+        parsedHeader.data.length > 0 && Array.isArray(parsedHeader.data[0])
+          ? (parsedHeader.data[0] as any[])
+          : [];
+
+      let genelColumnIndex = -1;
+      for (let i = 0; i < headerRow.length; i++) {
+        if (headerRow[i]?.toString().trim() === 'Genel') {
+          genelColumnIndex = i;
+          break;
+        }
+      }
+
+      if (genelColumnIndex === -1) {
+        return {dates: [], data: {}};
+      }
+
+      const dates: string[] = [];
+      const genelValues: number[] = [];
+
+      for (let i = 1; i < lines.length; i++) {
+        if (lines[i].trim()) {
+          try {
+            const parsed = Papa.parse(lines[i], {
+              header: false,
+              skipEmptyLines: true,
+            });
+            if (
+              parsed.data.length > 0 &&
+              Array.isArray(parsed.data[0]) &&
+              parsed.data[0].length > genelColumnIndex
+            ) {
+              const row = parsed.data[0] as any[];
+              let date = row[0]?.toString().trim() || '';
+              try {
+                const dateParts = date.split('-');
+                if (dateParts.length === 3) {
+                  date = `${dateParts[2]}.${dateParts[1]}.${dateParts[0]}`;
+                }
+              } catch (e) {
+                // Keep original format
+              }
+
+              const value = parseFloat(row[genelColumnIndex]?.toString() || '0') || 0.0;
+
+              dates.push(date);
+              genelValues.push(value);
+            }
+          } catch (e) {
+            // Skip parse errors
+          }
+        }
+      }
+
+      return {
+        dates: dates,
+        data: {
+          'TÜİK TÜFE': genelValues,
+        },
+      };
+    } catch (e) {
+      console.log('TÜİK endeks veri yükleme hatası:', e);
+      return {dates: [], data: {}};
+    }
+  }
+}
+

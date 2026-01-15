@@ -1,115 +1,78 @@
-# Web TÜFE Mobile
+# Web TÜFE Mobile - React Native
 
-Bu proje, webtufe.com sitesinin mobil versiyonudur. Turkish Consumer Price Index (TÜFE) verilerini görselleştiren Flutter uygulamasıdır.
+Bu proje, webtufe.com sitesinin mobil versiyonudur. Turkish Consumer Price Index (TÜFE) verilerini görselleştiren React Native uygulamasıdır.
 
 ## Özellikler
 
 - 📊 Aylık TÜFE değişim oranlarını yatay çubuk grafiği ile gösterir
 - 📱 Mobil cihazlar için optimize edilmiş arayüz
 - 📈 CSV dosyalarından veri okuma
-- 🎨 Web sitesine benzer tasarım
+- 🎨 Modern ve kullanıcı dostu tasarım
+- 💾 Cache yönetimi ile hızlı veri yükleme
 
-## Projeyi Çalıştırma
+## Gereksinimler
 
-### Web Versiyonu
-Canlı web versiyonu: https://kaboya19.github.io/WebTufeMobile/
+- Node.js >= 18
+- React Native CLI
+- Android Studio (Android için)
+- Xcode (iOS için)
 
-### Lokal Geliştirme Ortamında Çalıştırma
+## Kurulum
 
-#### Gereksinimler
-1. **Flutter SDK** (3.4.3 veya üzeri)
-   - Flutter'ı [flutter.dev](https://flutter.dev/docs/get-started/install) adresinden indirip yükleyin
-   - Windows için: Flutter SDK'yı indirin ve PATH'e ekleyin
-
-2. **Geliştirme Ortamı**
-   - Android Studio / VS Code (Flutter eklentileri ile)
-   - Veya herhangi bir kod editörü + terminal
-
-#### Kurulum Adımları
-
-1. **Projeyi klonlayın veya indirin**
+1. **Bağımlılıkları yükleyin**
    ```bash
-   git clone https://github.com/kaboya19/WebTufeMobile.git
-   cd WebTufeMobile
+   npm install
+   # veya
+   yarn install
    ```
 
-2. **Flutter bağımlılıklarını yükleyin**
+2. **iOS bağımlılıklarını yükleyin (sadece macOS)**
    ```bash
-   flutter pub get
+   cd ios && pod install && cd ..
    ```
 
-3. **Flutter kurulumunu kontrol edin**
-   ```bash
-   flutter doctor
-   ```
-   Bu komut eksik bileşenleri (Android SDK, VS Code eklentileri vb.) gösterir.
+3. **Uygulamayı çalıştırın**
 
-4. **Uygulamayı çalıştırın**
-
-   **Web tarayıcısında:**
+   **Android:**
    ```bash
-   flutter run -d chrome
-   ```
-   veya
-   ```bash
-   flutter run -d web-server
+   npm run android
+   # veya
+   yarn android
    ```
 
-   **Android emülatörde:**
+   **iOS:**
    ```bash
-   flutter run
-   ```
-   (Önce bir Android emülatör başlatmanız gerekir)
-
-   **Belirli bir cihazda:**
-   ```bash
-   flutter devices  # Mevcut cihazları listeler
-   flutter run -d <device-id>
+   npm run ios
+   # veya
+   yarn ios
    ```
 
-#### Hızlı Başlangıç
-```bash
-# Bağımlılıkları yükle
-flutter pub get
+## Proje Yapısı
 
-# Web'de çalıştır
-flutter run -d chrome
+```
+src/
+  ├── models/          # Veri modelleri
+  ├── services/        # API ve CSV servisleri
+  ├── pages/           # Sayfa bileşenleri
+  ├── components/      # Yeniden kullanılabilir bileşenler
+  └── App.tsx          # Ana uygulama bileşeni
 ```
 
-## Ekran Görüntüleri
+## Kullanılan Teknolojiler
 
-Ana ekran, TÜFE verilerini şu şekilde gösterir:
-- Konut: En yüksek artış oranı (mavi)
-- Web TÜFE: Genel endeks (kırmızı)
-- Diğer kategoriler: Sıralı liste (mavi)
+- **React Native**: Mobil uygulama framework'ü
+- **TypeScript**: Tip güvenliği
+- **React Navigation**: Navigasyon
+- **React Native Chart Kit**: Grafik çizimi
+- **AsyncStorage**: Yerel depolama
+- **PapaParse**: CSV parsing
 
-## Teknik Detaylar
+## Notlar
 
-### Kullanılan Paketler:
-- `fl_chart`: Grafik çizimi için
-- `csv`: CSV dosya okuma için
-- `flutter/services`: Asset dosyalarını okuma için
-
-### Dosya Yapısı:
-```
-lib/
-  main.dart           # Ana uygulama kodu
-assets/
-  gruplaraylık.csv    # TÜFE verileri
-```
-
-## Veri Formatı
-
-CSV dosyasının formatı:
-```csv
-,Grup,2025-02-28,2025-03-31,2025-04-30,2025-05-31,2025-06-30,2025-07-31
-0,Alkollü içecekler ve tütün,0.012674,9.896720,0.0,0.0,0.000156,3.669694
-1,Ev eşyası,5.940017,3.482335,0.878043,1.587086,0.454773,1.057602
-...
-```
-
-Uygulama son sütundaki (en güncel ay) verileri okur ve görselleştirir.
+- CSV dosyaları assets klasöründe bulunmalıdır
+- Android için `android/app/src/main/assets/` klasörüne
+- iOS için proje bundle'ına eklenmelidir
 
 ## Lisans
 
-MIT License 
+MIT License
