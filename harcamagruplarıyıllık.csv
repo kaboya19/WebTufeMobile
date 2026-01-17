@@ -39,15 +39,15 @@ Meyve ve sebze suları,43.58363868364883
 Şarap,9.749452061515584
 Bira,26.011034562448177
 Sigaralar,32.22241802427117
-Erkek giyim,31.536941503919238
-Kadın giyim,32.40507566092463
-Çocuk giyim,15.2558455346812
+Erkek giyim,31.53694150391937
+Kadın giyim,32.407132123999574
+Çocuk giyim,15.246153264992923
 Bebek giyim,6.070142813886337
 "Diğer giyim eşyaları ve aksesuarları (kravat, kemer, eşarp vb.)",14.929189467631044
 Giyim eşyalarının temizlenmesi ve tadilatı,35.558479921578254
-Erkek ayakkabısı,23.495162050522268
-Kadın ayakkabısı,17.26290377843116
-Çocuk ve bebek ayakkabısı,21.09033396704696
+Erkek ayakkabısı,23.485099490051397
+Kadın ayakkabısı,17.26290377843074
+Çocuk ve bebek ayakkabısı,21.09033396704647
 Ayakkabı bakım ve tamiri,38.89163848205743
 Gerçek kira,62.27688805690126
 Konutun bakım ve onarımı için malzemeler,41.2446999729768
@@ -55,7 +55,7 @@ Su (şebeke suyu),31.349236632062507
 Elektrik,38.37500000000003
 Doğalgaz ve ilgili abonelik ücretleri,24.5593689263794
 Tüpgaz (ev tüpü),23.504779078775286
-"Katı yakıtlar (odun, kömür)",37.31014720541586
+"Katı yakıtlar (odun, kömür)",37.31014720541588
 Mutfak mobilyaları,10.659627900454138
 Yatak odası mobilyaları,21.125660131851596
 Yemek odası ve oturma odası mobilyaları,20.504501884696037
@@ -69,8 +69,8 @@ Diğer büyük ev aletleri (elektrikli süpürge vb.),15.36933201612345
 Elektrikli küçük ev aletleri,22.34697594889439
 "Cam, porselen, seramik vb. mutfak eşyaları",17.302012860439554
 Çatal-bıçak takımı,15.519709485132328
-"Elektriksiz mutfak eşyaları ve ev gereçleri (tencere, tava, çaydanlık vb.)",17.568187769651942
-"Çeşitli küçük aksesuarlar (pil, ampul vb.)",28.28427009868264
+"Elektriksiz mutfak eşyaları ve ev gereçleri (tencere, tava, çaydanlık vb.)",17.56818776965192
+"Çeşitli küçük aksesuarlar (pil, ampul vb.)",28.28427009868262
 Evle ilgili küçük bakım-tamir mal ve hizmetleri,16.048931409393653
 "Ev ile ilgili temizlik malzemeleri (deterjan, yumuşatıcı vb.)",21.463399491608538
 "Ev ile ilgili diğer temizlik malzemeleri (bulaşık süngeri, çöp torbası vb.)",33.73656564249392
@@ -88,7 +88,7 @@ Kişisel ulaştırma araçları ile ilgili diğer hizmetler (köprü ve otoban g
 Demiryolu ile şehir içi yolcu taşımacılığı,50.14796649402824
 Otobüs ile şehir içi yolcu taşımacılığı,43.490793186913024
 Karayolu ile şehirler arası yolcu taşımacılığı,31.10390304300332
-Havayolu ile yolcu taşımacılığı,46.621211739889645
+Havayolu ile yolcu taşımacılığı,46.62121173988951
 Deniz ve yurt içi su yolu ile yolcu taşımacılığı,35.77148204067433
 "Diğer satın alınan ulaştırma hizmetleri (nakliye, kargo vb.)",37.23408956070045
 "Mobil telefon, ekipman ve aksesuarları",5.245945915465966
@@ -107,14 +107,14 @@ Orta öğretim,48.35293155927123
 Üniversite eğitimi,98.9594419614507
 "Lokanta, pastane, kafe vb. yerlerde yenen yemekler",33.2767696241955
 "Lokanta, pastane, kafe vb. yerlerde içilen içecekler",11.741228940404236
-"Otel, pansyion vb. yerlerde konaklama hizmetleri",144.61414790670085
+"Otel, pansyion vb. yerlerde konaklama hizmetleri",144.61414790670113
 Erkekler için kuaförlük hizmetleri,77.47080609700807
-Kadınlar için kuaförlük hizmetleri,59.969296879857836
-Kişisel bakımda kullanılan elektrikli aletler,24.215560191185006
+Kadınlar için kuaförlük hizmetleri,59.96929687985777
+Kişisel bakımda kullanılan elektrikli aletler,24.215560191185027
 "Kişisel hijyen ve bakım için kullanılan ürünler, kozmetikler",19.197113181550996
 "Mücevheratlar, saat ve kol saatleri",83.40069353363924
-Seyahat malzemeleri ve diğer kişisel aksesuarlar,28.18040593764566
-Başka yerde sınıflandırılmamış diğer kişisel aksesuarlar,25.379742763159307
+Seyahat malzemeleri ve diğer kişisel aksesuarlar,28.180405937645638
+Başka yerde sınıflandırılmamış diğer kişisel aksesuarlar,25.379742763159285
 Başka yerde sınıflandırılmayan diğer mali hizmetler (para havale ücreti vb.),-1.1102230246251565e-14
 "Başka yerde sınıflandırılamayan diğer gıda ürünleri (tuz, sirke, ketçap, mayonez vb.)",29.613178097735226
 TÜFE,
