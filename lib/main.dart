@@ -48,6 +48,9 @@ Future<void> _checkAndClearCacheOnVersionChange() async {
   }
 }
 
+// Bakım modu - true olduğunda sadece bakım ekranı gösterilir
+const bool _maintenanceMode = false;
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -59,7 +62,45 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         fontFamily: 'Roboto',
       ),
-      home: const MainPage(),
+      home: _maintenanceMode ? const MaintenancePage() : const MainPage(),
+    );
+  }
+}
+
+class MaintenancePage extends StatelessWidget {
+  const MaintenancePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.construction,
+                size: 80,
+                color: Colors.blue.shade700,
+              ),
+              const SizedBox(height: 32),
+              Text(
+                'Nihai veriler hazırlanıyor. Sabrınız için teşekkürler...',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.grey.shade800,
+                  fontFamily: 'Roboto',
+                  letterSpacing: 0.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

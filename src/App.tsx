@@ -1,7 +1,7 @@
 import React, {useEffect} from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import {StatusBar, Platform} from 'react-native';
+import {StatusBar, Platform, View, Text, StyleSheet} from 'react-native';
 import {MaterialIcons as Icon} from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
@@ -16,11 +16,27 @@ import BultenlerPage from './pages/BultenlerPage';
 import MetodolojiPage from './pages/MetodolojiPage';
 import {GitHubCSVService} from './services/GitHubCSVService';
 
+// Bakım modu - true olduğunda sadece bakım ekranı gösterilir
+const MAINTENANCE_MODE = true;
+
 const Tab = createBottomTabNavigator();
+
+const MaintenanceScreen = () => {
+  return (
+    <View style={styles.container}>
+      <Icon name="construction" size={80} color="#1976D2" />
+      <Text style={styles.message}>
+        Nihai veriler hazırlanıyor. Sabrınız için teşekkürler...
+      </Text>
+    </View>
+  );
+};
 
 const App = () => {
   useEffect(() => {
-    checkAndClearCacheOnVersionChange();
+    if (!MAINTENANCE_MODE) {
+      checkAndClearCacheOnVersionChange();
+    }
   }, []);
 
   const checkAndClearCacheOnVersionChange = async () => {
@@ -44,6 +60,19 @@ const App = () => {
       console.log('Versiyon kontrolü hatası:', e);
     }
   };
+
+  // Bakım modu aktifse sadece bakım ekranını göster
+  if (MAINTENANCE_MODE) {
+    return (
+      <View style={styles.container}>
+        <StatusBar
+          barStyle={Platform.OS === 'ios' ? 'dark-content' : 'light-content'}
+          backgroundColor="#fff"
+        />
+        <MaintenanceScreen />
+      </View>
+    );
+  }
 
   return (
     <NavigationContainer>
@@ -147,6 +176,25 @@ const App = () => {
     </NavigationContainer>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
+  },
+  message: {
+    fontSize: 24,
+    fontWeight: '500',
+    color: '#424242',
+    textAlign: 'center',
+    marginTop: 32,
+    fontFamily: 'Roboto',
+    letterSpacing: 0.5,
+  },
+});
 
 export default App;
 
