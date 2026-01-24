@@ -17,7 +17,7 @@ import MetodolojiPage from './pages/MetodolojiPage';
 import {GitHubCSVService} from './services/GitHubCSVService';
 
 // Bakım modu - true olduğunda sadece bakım ekranı gösterilir
-const MAINTENANCE_MODE = true;
+const MAINTENANCE_MODE = false;
 
 const Tab = createBottomTabNavigator();
 
