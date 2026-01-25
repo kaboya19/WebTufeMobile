@@ -40,14 +40,14 @@ Meyve ve sebze suları,43.742562556478745
 Bira,26.16242175290917
 Sigaralar,32.22241802427117
 Erkek giyim,31.80090002971514
-Kadın giyim,32.98504326314558
-Çocuk giyim,15.44450353346376
+Kadın giyim,32.985043263145485
+Çocuk giyim,15.44450353346396
 Bebek giyim,6.284700689293499
-"Diğer giyim eşyaları ve aksesuarları (kravat, kemer, eşarp vb.)",15.448062518049333
+"Diğer giyim eşyaları ve aksesuarları (kravat, kemer, eşarp vb.)",15.448062518049355
 Giyim eşyalarının temizlenmesi ve tadilatı,35.683428799282325
-Erkek ayakkabısı,23.646267867619073
+Erkek ayakkabısı,23.64626786761912
 Kadın ayakkabısı,17.625582776072314
-Çocuk ve bebek ayakkabısı,21.122994437419806
+Çocuk ve bebek ayakkabısı,21.122994437419784
 Ayakkabı bakım ve tamiri,39.955667660190095
 Gerçek kira,62.872169181088026
 Konutun bakım ve onarımı için malzemeler,41.493120926714624
@@ -67,7 +67,7 @@ Ev tekstili,74.2556531015831
 Klima ve ısıtıcılar,18.05149258247798
 Diğer büyük ev aletleri (elektrikli süpürge vb.),15.597998641094168
 Elektrikli küçük ev aletleri,22.437348168268656
-"Cam, porselen, seramik vb. mutfak eşyaları",17.42213073855281
+"Cam, porselen, seramik vb. mutfak eşyaları",17.42213073855283
 Çatal-bıçak takımı,15.755786138540007
 "Elektriksiz mutfak eşyaları ve ev gereçleri (tencere, tava, çaydanlık vb.)",17.736126658224084
 "Çeşitli küçük aksesuarlar (pil, ampul vb.)",28.583809296208674
@@ -88,7 +88,7 @@ Kişisel ulaştırma araçları ile ilgili diğer hizmetler (köprü ve otoban g
 Demiryolu ile şehir içi yolcu taşımacılığı,50.15348990005912
 Otobüs ile şehir içi yolcu taşımacılığı,43.4929435064584
 Karayolu ile şehirler arası yolcu taşımacılığı,32.31713136409577
-Havayolu ile yolcu taşımacılığı,51.4480676221845
+Havayolu ile yolcu taşımacılığı,51.44806762218448
 Deniz ve yurt içi su yolu ile yolcu taşımacılığı,35.77883094951619
 "Diğer satın alınan ulaştırma hizmetleri (nakliye, kargo vb.)",37.23408956070045
 "Mobil telefon, ekipman ve aksesuarları",5.199757905887492
@@ -117,4 +117,4 @@ Seyahat malzemeleri ve diğer kişisel aksesuarlar,28.376369311115557
 Başka yerde sınıflandırılmamış diğer kişisel aksesuarlar,26.09456611081371
 Başka yerde sınıflandırılmayan diğer mali hizmetler (para havale ücreti vb.),-1.1102230246251565e-14
 "Başka yerde sınıflandırılamayan diğer gıda ürünleri (tuz, sirke, ketçap, mayonez vb.)",29.97721353768359
-TÜFE,
+TÜFE,31.442787302321197
