@@ -49,7 +49,7 @@ Future<void> _checkAndClearCacheOnVersionChange() async {
 }
 
 // Bakım modu - true olduğunda sadece bakım ekranı gösterilir
-const bool _maintenanceMode = false;
+const bool _maintenanceMode = true;
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
