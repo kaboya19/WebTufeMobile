@@ -17,6 +17,22 @@ const MONTH_NAMES: {[key: string]: string} = {
 };
 
 export class GruplarService {
+  // Grup adlarını karşılaştırırken daha esnek eşleştirme için normalizasyon
+  private static normalizeKey(s: string): string {
+    return (s || '')
+      .toLowerCase()
+      .trim()
+      .replace(/\u00a0/g, ' ')
+      .replace(/[’'"]/g, '')
+      .replace(/[(),.]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .replace(/ğ/g, 'g')
+      .replace(/ü/g, 'u')
+      .replace(/ş/g, 's')
+      .replace(/ı/g, 'i')
+      .replace(/ö/g, 'o')
+      .replace(/ç/g, 'c');
+  }
   static async loadGruplarData(): Promise<{
     data: {[key: string]: number[]};
     dates: string[];
@@ -322,11 +338,34 @@ export class GruplarService {
       }
       
       const headerRow = parsedHeader.data[0] as any[];
+
+      // Debug: header ve hedef grup adını logla
+      try {
+        const normalizedHeaders = headerRow.map((h) =>
+          this.normalizeKey(h?.toString() ?? '')
+        );
+        const targetNorm = this.normalizeKey(grupAdi);
+        console.log(
+          '[getYearlyChange] grupAdi=',
+          grupAdi,
+          'targetNorm=',
+          targetNorm,
+          'headerRaw=',
+          headerRow,
+          'headerNorm=',
+          normalizedHeaders,
+        );
+      } catch (e) {
+        console.log('[getYearlyChange] header debug log error:', e);
+      }
       
-      // Grup adının sütun index'ini bul
+      // Grup adının sütun index'ini bul (normalize ederek)
+      const target = this.normalizeKey(grupAdi);
       let columnIndex = -1;
       for (let i = 0; i < headerRow.length; i++) {
-        if (headerRow[i]?.toString().trim() === grupAdi) {
+        const headerName = headerRow[i]?.toString() ?? '';
+        const normalizedHeader = this.normalizeKey(headerName);
+        if (normalizedHeader === target) {
           columnIndex = i;
           break;
         }
