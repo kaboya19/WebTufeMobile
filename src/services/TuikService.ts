@@ -283,68 +283,50 @@ export class TuikService {
     data: {[key: string]: number[]};
   }> {
     try {
-      const csvData = await GitHubCSVService.loadCSVFromGitHub('tuikytd.csv');
+      const csvData = await GitHubCSVService.loadCSVFromGitHub('tüik.csv');
       const lines = csvData.split(/\r?\n/);
 
       if (lines.length === 0) {
         return {dates: [], data: {}};
       }
 
-      const parsedHeader = Papa.parse(lines[0], {
-        header: false,
-        skipEmptyLines: true,
-      });
-      const headerRow =
-        parsedHeader.data.length > 0 && Array.isArray(parsedHeader.data[0])
-          ? (parsedHeader.data[0] as any[])
-          : [];
-
-      let genelColumnIndex = -1;
-      for (let i = 0; i < headerRow.length; i++) {
-        if (headerRow[i]?.toString().trim() === 'Genel') {
-          genelColumnIndex = i;
-          break;
-        }
-      }
-
-      if (genelColumnIndex === -1) {
-        return {dates: [], data: {}};
-      }
-
       const dates: string[] = [];
       const genelValues: number[] = [];
 
+      // tüik.csv formatı: ilk satır header (,TÜİK), sonraki satırlar tarih,değer
       for (let i = 1; i < lines.length; i++) {
-        if (lines[i].trim()) {
-          try {
-            const parsed = Papa.parse(lines[i], {
-              header: false,
-              skipEmptyLines: true,
-            });
-            if (
-              parsed.data.length > 0 &&
-              Array.isArray(parsed.data[0]) &&
-              parsed.data[0].length > genelColumnIndex
-            ) {
-              const row = parsed.data[0] as any[];
-              let date = row[0]?.toString().trim() || '';
-              try {
-                const dateParts = date.split('-');
-                if (dateParts.length === 3) {
-                  date = `${dateParts[2]}.${dateParts[1]}.${dateParts[0]}`;
-                }
-              } catch (e) {
-                // Keep original format
+        if (!lines[i].trim()) continue;
+        try {
+          const parsed = Papa.parse(lines[i], {
+            header: false,
+            skipEmptyLines: true,
+          });
+          if (
+            parsed.data.length > 0 &&
+            Array.isArray(parsed.data[0]) &&
+            parsed.data[0].length >= 2
+          ) {
+            const row = parsed.data[0] as any[];
+            let date = row[0]?.toString().trim() || '';
+            
+            // Tarihi DD.MM.YYYY formatına çevir
+            try {
+              const dateParts = date.split('-');
+              if (dateParts.length === 3) {
+                date = `${dateParts[2]}.${dateParts[1]}.${dateParts[0]}`;
               }
-
-              const value = parseFloat(row[genelColumnIndex]?.toString() || '0') || 0.0;
-
-              dates.push(date);
-              genelValues.push(value);
+            } catch (e) {
+              // Keep original format
             }
-          } catch (e) {
-            // Skip parse errors
+
+            const value = parseFloat(row[1]?.toString() || '0') || 0.0;
+
+            dates.push(date);
+            genelValues.push(value);
           }
+        } catch (e) {
+          // Skip parse errors
+          continue;
         }
       }
 
