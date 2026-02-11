@@ -277,6 +277,81 @@ export class MaddelerService {
       return {dates: [], values: []};
     }
   }
+
+  static async getMaddeYearlyChange(maddeAdi: string): Promise<number> {
+    try {
+      const csvData = await GitHubCSVService.loadCSVFromGitHub(
+        'maddeleryıllık.csv',
+        false // Cache'i devre dışı bırak
+      );
+
+      const lines = csvData.split(/\r?\n/);
+      if (lines.length === 0) {
+        return 0.0;
+      }
+
+      const parsedHeader = Papa.parse(lines[0], {
+        header: false,
+        skipEmptyLines: true,
+      });
+      const headerRow =
+        parsedHeader.data.length > 0 && Array.isArray(parsedHeader.data[0])
+          ? (parsedHeader.data[0] as any[])
+          : [];
+
+      // Madde adını normalize et
+      const normalizedMaddeAdi = maddeAdi.trim().toLowerCase();
+
+      // Header'dan madde kolonunu bul
+      let maddeColumnIndex = -1;
+      for (let i = 1; i < headerRow.length; i++) {
+        const headerName = headerRow[i]?.toString().trim().toLowerCase() || '';
+        if (headerName === normalizedMaddeAdi) {
+          maddeColumnIndex = i;
+          break;
+        }
+      }
+
+      if (maddeColumnIndex === -1) {
+        console.log(`Madde bulunamadı: ${maddeAdi}`);
+        return 0.0;
+      }
+
+      // Son satırdan (en son tarih) değeri oku
+      for (let i = lines.length - 1; i >= 1; i--) {
+        const line = lines[i].trim();
+        if (!line) continue;
+        
+        try {
+          const parsed = Papa.parse(line, {
+            header: false,
+            skipEmptyLines: true,
+          });
+          if (
+            parsed.data.length > 0 &&
+            Array.isArray(parsed.data[0]) &&
+            parsed.data[0].length > maddeColumnIndex
+          ) {
+            const row = parsed.data[0] as any[];
+            const value = parseFloat(row[maddeColumnIndex]?.toString() || '0');
+            
+            // Eğer değer geçerli bir sayıysa döndür
+            if (!isNaN(value) && isFinite(value)) {
+              return value;
+            }
+          }
+        } catch (e) {
+          // Skip parse errors
+          continue;
+        }
+      }
+
+      return 0.0;
+    } catch (e) {
+      console.log('Madde yıllık değişim okuma hatası:', e);
+      return 0.0;
+    }
+  }
 }
 
 const MONTH_NAMES: {[key: string]: string} = {

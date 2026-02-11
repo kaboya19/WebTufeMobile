@@ -129,9 +129,15 @@ const TufePage = () => {
     if (!selectedEndeks) return 0.0;
 
     try {
-      // Yıllık CSV'den oku
-      const yearlyChange = await EndekslerService.getYearlyChange(selectedEndeks);
-      return yearlyChange;
+      if (selectedEndeks === 'Web TÜFE') {
+        // Web TÜFE için EndekslerService'den oku
+        const yearlyChange = await EndekslerService.getYearlyChange(selectedEndeks);
+        return yearlyChange;
+      } else {
+        // Web TÜFE dışındaki maddeler için maddeleryıllık.csv'den oku
+        const yearlyChange = await MaddelerService.getMaddeYearlyChange(selectedEndeks);
+        return yearlyChange;
+      }
     } catch (e) {
       console.log('Yıllık değişim okuma hatası:', e);
       // Fallback: eski mantık
