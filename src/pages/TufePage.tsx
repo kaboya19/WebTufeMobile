@@ -13,6 +13,7 @@ import LineChartWithHover from '../components/LineChartWithHover';
 import {EndekslerService} from '../services/EndekslerService';
 import {GruplarService} from '../services/GruplarService';
 import {TuikService} from '../services/TuikService';
+import {MaddelerService} from '../services/MaddelerService';
 
 const TufePage = () => {
   const {width: windowWidth} = useWindowDimensions();
@@ -26,6 +27,8 @@ const TufePage = () => {
   const [dates, setDates] = useState<string[]>([]);
   const [tufeValues, setTufeValues] = useState<number[]>([]);
   const [tufeDates, setTufeDates] = useState<string[]>([]);
+  const [monthlyChartData, setMonthlyChartData] = useState<any>(null);
+  const [monthlyDates, setMonthlyDates] = useState<string[]>([]);
 
   useEffect(() => {
     loadData();
@@ -245,17 +248,108 @@ const TufePage = () => {
         console.log('Aylık değişim okuma hatası:', e);
         setMonthlyChange(0.0);
       }
+
+      // Aylık değişim grafiği verilerini yükle
+      await updateMonthlyChartData();
     } catch (e) {
       console.log('Error updating chart data:', e);
     }
   };
 
-  const getComparedEndeksChartData = async (): Promise<{[key: string]: Array<{x: number; y: number}>}> => {
+  const updateMonthlyChartData = async () => {
+    if (!selectedEndeks) return;
+
+    try {
+      if (selectedEndeks === 'Web TÜFE') {
+        // Web TÜFE için gruplaraylıkv2.csv'den Web TÜFE ve tuikaylik.csv'den TÜFE oku
+        const webTufeMonthly = await GruplarService.getGrupMonthlyChangeData('Web TÜFE');
+        const webTufeMonthlyDates = await GruplarService.getMonthlyDates();
+        const tuikMonthly = await TuikService.loadTuikMonthlyChangeData();
+
+        if (webTufeMonthly.length > 0 && webTufeMonthlyDates.length > 0) {
+          const formattedDates = webTufeMonthlyDates.map(formatDateToYearMonth);
+          
+          // TÜİK verilerini Web TÜFE tarihlerine göre eşleştir
+          const tuikValues: (number | null)[] = webTufeMonthlyDates.map(() => null);
+          
+          if (tuikMonthly.dates.length > 0 && tuikMonthly.data['TÜİK TÜFE']) {
+            const tuikDates = tuikMonthly.dates;
+            const tuikData = tuikMonthly.data['TÜİK TÜFE'];
+            
+            for (let i = 0; i < webTufeMonthlyDates.length; i++) {
+              const webDate = formatDateToYearMonth(webTufeMonthlyDates[i]);
+              const tuikIndex = tuikDates.findIndex(d => formatDateToYearMonth(d) === webDate);
+              if (tuikIndex !== -1 && tuikIndex < tuikData.length) {
+                tuikValues[i] = tuikData[tuikIndex];
+              }
+            }
+          }
+
+          const hasTuikData = tuikValues.some(v => v !== null && v !== undefined);
+
+          setMonthlyDates(webTufeMonthlyDates);
+          setMonthlyChartData({
+            labels: formattedDates.map((_, i) =>
+              i % Math.ceil(formattedDates.length / 5) === 0
+                ? formattedDates[i]
+                : '',
+            ),
+            datasets: [
+              {
+                data: webTufeMonthly.map(v => v),
+                color: () => `rgba(25, 118, 210, 1)`,
+                strokeWidth: 3,
+              },
+              ...(hasTuikData ? [{
+                // Null değerleri null olarak bırak ki grafik boş bıraksın
+                data: tuikValues,
+                color: () => `rgba(211, 47, 47, 1)`,
+                strokeWidth: 3,
+              }] : []),
+            ],
+            legend: hasTuikData ? ['Web TÜFE', 'TÜİK TÜFE'] : ['Web TÜFE'],
+          });
+        } else {
+          setMonthlyChartData(null);
+        }
+      } else {
+        // Diğer maddeler için maddeleraylık.csv'den oku
+        const maddeMonthly = await MaddelerService.getMaddeMonthlyChangeData(selectedEndeks);
+        
+        if (maddeMonthly.values.length > 0 && maddeMonthly.dates.length > 0) {
+          const formattedDates = maddeMonthly.dates.map(formatDateToYearMonth);
+          
+          setMonthlyDates(maddeMonthly.dates);
+          setMonthlyChartData({
+            labels: formattedDates.map((_, i) =>
+              i % Math.ceil(formattedDates.length / 5) === 0
+                ? formattedDates[i]
+                : '',
+            ),
+            datasets: [
+              {
+                data: maddeMonthly.values,
+                color: () => `rgba(25, 118, 210, 1)`,
+                strokeWidth: 3,
+              },
+            ],
+          });
+        } else {
+          setMonthlyChartData(null);
+        }
+      }
+    } catch (e) {
+      console.log('Aylık değişim grafiği veri yükleme hatası:', e);
+      setMonthlyChartData(null);
+    }
+  };
+
+  const getComparedEndeksChartData = async (): Promise<{[key: string]: Array<{x: number; y: number | null}>}> => {
     if (selectedEndeks !== 'Web TÜFE') return {};
 
     try {
       const tuikData = await TuikService.loadTuikEndeksData();
-      const result: {[key: string]: Array<{x: number; y: number}>} = {};
+      const result: {[key: string]: Array<{x: number; y: number | null}>} = {};
 
       if (tufeValues.length > 0) {
         result['Web TÜFE'] = tufeValues.map((value, index) => ({
@@ -381,9 +475,38 @@ const TufePage = () => {
     return `${day}.${month}.${year}`;
   };
 
-  // Tarihi yıl-ay formatına çevir (DD.MM.YYYY -> YYYY-MM)
+  // Tarihi yıl-ay formatına çevir (DD.MM.YYYY -> YYYY-MM veya "Oca 2025" -> "2025-01")
   const formatDateToYearMonth = (dateStr: string): string => {
     if (!dateStr) return '';
+    
+    // "Oca 2025" formatı
+    if (dateStr.includes(' ')) {
+      const parts = dateStr.split(' ');
+      if (parts.length === 2) {
+        const monthStr = parts[0];
+        const year = parts[1];
+        const monthMap: {[key: string]: string} = {
+          'Oca': '01', 'Ocak': '01',
+          'Şub': '02', 'Şubat': '02',
+          'Mar': '03', 'Mart': '03',
+          'Nis': '04', 'Nisan': '04',
+          'May': '05', 'Mayıs': '05',
+          'Haz': '06', 'Haziran': '06',
+          'Tem': '07', 'Temmuz': '07',
+          'Ağu': '08', 'Ağustos': '08',
+          'Eyl': '09', 'Eylül': '09',
+          'Eki': '10', 'Ekim': '10',
+          'Kas': '11', 'Kasım': '11',
+          'Ara': '12', 'Aralık': '12',
+        };
+        const month = monthMap[monthStr];
+        if (month) {
+          return `${year}-${month}`;
+        }
+      }
+    }
+    
+    // DD.MM.YYYY formatı
     const parts = dateStr.split('.');
     if (parts.length === 3) {
       const day = parts[0];
@@ -391,6 +514,15 @@ const TufePage = () => {
       const year = parts[2];
       return `${year}-${month}`;
     }
+    
+    // YYYY-MM-DD formatı
+    if (dateStr.includes('-')) {
+      const parts = dateStr.split('-');
+      if (parts.length >= 2) {
+        return `${parts[0]}-${parts[1].padStart(2, '0')}`;
+      }
+    }
+    
     return dateStr;
   };
 
@@ -486,12 +618,44 @@ const TufePage = () => {
             chartConfig={chartConfig}
             withDots={false}
             bezier
-            horizontalLabelRotation={45}
             style={styles.chart}
             dates={(selectedEndeks === 'Web TÜFE' ? tufeDates : dates).map(
               formatDateToYearMonth,
             )}
             labels={mainChartData?.labels}
+            selectedEndeks={selectedEndeks}
+          />
+        </View>
+      )}
+
+      {monthlyChartData && (
+        <View style={styles.chartSection}>
+          <Text style={styles.chartTitle}>Aylık Değişim Oranları (%)</Text>
+          {monthlyChartData.legend && monthlyChartData.legend.length > 1 && (
+            <View style={styles.legend}>
+              <View style={styles.legendItem}>
+                <View style={[styles.legendLine, {backgroundColor: '#2196F3'}]} />
+                <Text style={styles.legendText}>Web TÜFE</Text>
+              </View>
+              <View style={styles.legendItem}>
+                <View style={[styles.legendLine, {backgroundColor: '#f44336'}]} />
+                <Text style={styles.legendText}>TÜİK TÜFE</Text>
+              </View>
+            </View>
+          )}
+          <LineChartWithHover
+            data={monthlyChartData}
+            width={Math.max(0, windowWidth - 32)}
+            height={220}
+            chartConfig={{
+              ...chartConfig,
+              color: () => `rgba(25, 118, 210, 1)`,
+            }}
+            withDots={false}
+            bezier={false}
+            style={styles.chart}
+            dates={monthlyDates.map(formatDateToYearMonth)}
+            labels={monthlyChartData?.labels}
             selectedEndeks={selectedEndeks}
           />
         </View>

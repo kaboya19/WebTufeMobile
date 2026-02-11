@@ -192,5 +192,105 @@ export class MaddelerService {
       throw new Error(`Madde değişim oranları yükleme hatası: ${e}`);
     }
   }
+
+  static async getMaddeMonthlyChangeData(maddeAdi: string): Promise<{
+    dates: string[];
+    values: number[];
+  }> {
+    try {
+      const csvData = await GitHubCSVService.loadCSVFromGitHub(
+        'maddeleraylık.csv'
+      );
+
+      const lines = csvData.split(/\r?\n/);
+      if (lines.length === 0) {
+        return {dates: [], values: []};
+      }
+
+      const parsedHeader = Papa.parse(lines[0], {
+        header: false,
+        skipEmptyLines: true,
+      });
+      const headerRow =
+        parsedHeader.data.length > 0 && Array.isArray(parsedHeader.data[0])
+          ? (parsedHeader.data[0] as any[])
+          : [];
+
+      // Tarihleri başlık satırından al (3. kolondan itibaren)
+      const dates: string[] = [];
+      for (let i = 2; i < headerRow.length; i++) {
+        const tarihStr = headerRow[i]?.toString().trim() || '';
+        if (tarihStr && tarihStr.includes('-')) {
+          try {
+            const dateParts = tarihStr.split('-');
+            if (dateParts.length === 3) {
+              const monthName = MONTH_NAMES[dateParts[1]] || dateParts[1];
+              dates.push(`${monthName} ${dateParts[0]}`);
+            } else {
+              dates.push(tarihStr);
+            }
+          } catch (e) {
+            dates.push(tarihStr);
+          }
+        }
+      }
+
+      // Madde adını normalize et
+      const normalizedMaddeAdi = maddeAdi.trim().toLowerCase();
+
+      // Veri satırlarında maddeyi bul
+      const values: number[] = [];
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+        try {
+          const parsed = Papa.parse(line, {
+            header: false,
+            skipEmptyLines: true,
+          });
+          if (
+            parsed.data.length > 0 &&
+            Array.isArray(parsed.data[0]) &&
+            parsed.data[0].length >= 2
+          ) {
+            const row = parsed.data[0] as any[];
+            const rowMaddeName = row[1]?.toString().trim().toLowerCase() || '';
+
+            if (rowMaddeName === normalizedMaddeAdi) {
+              // Aylık değişim değerlerini oku (3. kolondan itibaren)
+              for (let j = 2; j < row.length && j <= dates.length + 1; j++) {
+                const value = parseFloat(row[j]?.toString() || '0') || 0.0;
+                values.push(value);
+              }
+              break; // Madde bulundu, döngüden çık
+            }
+          }
+        } catch (e) {
+          // Skip parse errors
+          continue;
+        }
+      }
+
+      return {dates: dates, values: values};
+    } catch (e) {
+      console.log('Madde aylık değişim veri yükleme hatası:', e);
+      return {dates: [], values: []};
+    }
+  }
 }
+
+const MONTH_NAMES: {[key: string]: string} = {
+  '01': 'Oca',
+  '02': 'Şub',
+  '03': 'Mar',
+  '04': 'Nis',
+  '05': 'May',
+  '06': 'Haz',
+  '07': 'Tem',
+  '08': 'Ağu',
+  '09': 'Eyl',
+  '10': 'Eki',
+  '11': 'Kas',
+  '12': 'Ara',
+};
 

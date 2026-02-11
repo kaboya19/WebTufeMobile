@@ -341,5 +341,85 @@ export class TuikService {
       return {dates: [], data: {}};
     }
   }
+
+  static async loadTuikMonthlyChangeData(): Promise<{
+    dates: string[];
+    data: {[key: string]: number[]};
+  }> {
+    try {
+      const csvData = await GitHubCSVService.loadCSVFromGitHub('tuikaylik.csv');
+      const lines = csvData.split(/\r?\n/);
+
+      if (lines.length === 0) {
+        return {dates: [], data: {}};
+      }
+
+      const dates: string[] = [];
+      const tuikValues: number[] = [];
+
+      // Veri satırlarından tarih ve TÜFE değerlerini oku (ilk satır header, atla)
+      for (let i = 1; i < lines.length; i++) {
+        if (!lines[i].trim()) continue;
+        try {
+          const parsed = Papa.parse(lines[i], {
+            header: false,
+            skipEmptyLines: true,
+          });
+          if (
+            parsed.data.length > 0 &&
+            Array.isArray(parsed.data[0]) &&
+            parsed.data[0].length >= 2
+          ) {
+            const row = parsed.data[0] as any[];
+            // İlk kolon tarih (2025-01-31 formatında)
+            const tarihStr = row[0]?.toString().trim() || '';
+            // İkinci kolon TÜFE değeri
+            const value = parseFloat(row[1]?.toString() || '0') || 0.0;
+
+            if (tarihStr && tarihStr.includes('-')) {
+              try {
+                const dateParts = tarihStr.split('-');
+                if (dateParts.length === 3) {
+                  const monthName = MONTH_NAMES[dateParts[1]] || dateParts[1];
+                  dates.push(`${monthName} ${dateParts[0]}`);
+                  tuikValues.push(value);
+                }
+              } catch (e) {
+                // Skip invalid dates
+              }
+            }
+          }
+        } catch (e) {
+          // Skip parse errors
+          continue;
+        }
+      }
+
+      return {
+        dates: dates,
+        data: {
+          'TÜİK TÜFE': tuikValues,
+        },
+      };
+    } catch (e) {
+      console.log('TÜİK aylık değişim veri yükleme hatası:', e);
+      return {dates: [], data: {}};
+    }
+  }
 }
+
+const MONTH_NAMES: {[key: string]: string} = {
+  '01': 'Ocak',
+  '02': 'Şubat',
+  '03': 'Mart',
+  '04': 'Nisan',
+  '05': 'Mayıs',
+  '06': 'Haziran',
+  '07': 'Temmuz',
+  '08': 'Ağustos',
+  '09': 'Eylül',
+  '10': 'Ekim',
+  '11': 'Kasım',
+  '12': 'Aralık',
+};
 
