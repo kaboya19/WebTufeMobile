@@ -115,9 +115,9 @@ export class TuikService {
     dates: string[];
     data: {[key: string]: number[]};
   }> {
-    // tuikytd.csv: YYYY-MM-DD tarihli ve ana grup kolonları mevcut
+    // tüik_anagruplarv2.csv: YYYY-MM-DD tarihli ve ana grup kolonları mevcut
     return await this.loadTuikColumnFromCsv(
-      'tuikytd.csv',
+      'tüik_anagruplarv2.csv',
       grupName,
       `TÜİK ${grupName}`,
       true
@@ -157,10 +157,10 @@ export class TuikService {
     dates: string[];
     data: {[key: string]: number[]};
   }> {
-    // tuikaylik.csv: YYYY-MM-DD tarihli ve ana grup kolonları mevcut
+    // tüik_anagruplaraylikv2.csv: YYYY-MM-DD tarihli ve ana grup aylık değişim kolonları mevcut
     // date conversion gerekmiyor; AnaGruplarPage year-month match yapıyor
     return await this.loadTuikColumnFromCsv(
-      'tuikaylik.csv',
+      'tüik_anagruplaraylikv2.csv',
       grupName,
       `TÜİK ${grupName}`,
       false

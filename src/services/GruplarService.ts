@@ -24,7 +24,7 @@ export class GruplarService {
   }> {
     try {
       const csvData = await GitHubCSVService.loadCSVFromGitHub(
-        'gruplar.csv',
+        'gruplarv2.csv',
         false
       );
 
@@ -53,11 +53,28 @@ export class GruplarService {
 
       const gruplarData: {[key: string]: number[]} = {};
       const dates: string[] = [];
+
+      // Yeni format: ilk satır grup adları, ilk sütun boş
+      const headerRow = rows[0];
       const grupNames: string[] = [];
 
-      // Başlık satırından günlük tarihleri al ve dd.MM.yyyy formatına çevir
-      for (let i = 1; i < rows[0].length; i++) {
-        const tarihStr = rows[0][i]?.toString() || '';
+      for (let col = 1; col < headerRow.length; col++) {
+        const grupAdi = headerRow[col]?.toString().trim() || '';
+        if (grupAdi) {
+          grupNames.push(grupAdi);
+          gruplarData[grupAdi] = [];
+        }
+      }
+
+      // Satırlar: 0. sütun tarih (YYYY-MM-DD), devamında her grup için endeks
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        if (!row || row.length === 0) continue;
+
+        const tarihStr = row[0]?.toString().trim() || '';
+        if (!tarihStr) continue;
+
+        // Tarihi dd.MM.yyyy formatına çevir
         try {
           const dateParts = tarihStr.split('-');
           if (dateParts.length === 3) {
@@ -69,32 +86,25 @@ export class GruplarService {
         } catch (e) {
           dates.push(tarihStr);
         }
-      }
 
-      // Her ana grup için endeks verilerini doğrudan oku
-      for (let i = 1; i < rows.length; i++) {
-        if (rows[i].length >= 2) {
-          const grupAdi = rows[i][0]?.toString().trim() || '';
-          if (grupAdi) {
-            grupNames.push(grupAdi);
-            gruplarData[grupAdi] = [];
+        // Her grup için ilgili kolondan değeri oku
+        for (let col = 1; col < headerRow.length; col++) {
+          const grupAdi = headerRow[col]?.toString().trim() || '';
+          if (!grupAdi || !(grupAdi in gruplarData)) continue;
 
-            // Günlük endeks değerlerini doğrudan al
-            for (let j = 1; j < rows[i].length && j <= dates.length; j++) {
-              try {
-                const indexValue = parseFloat(rows[i][j]?.toString() || '0') || 0;
-                gruplarData[grupAdi].push(indexValue);
-              } catch (e) {
-                // Geçersiz değer için önceki değeri kullan
-                if (gruplarData[grupAdi].length > 0) {
-                  gruplarData[grupAdi].push(
-                    gruplarData[grupAdi][gruplarData[grupAdi].length - 1]
-                  );
-                } else {
-                  gruplarData[grupAdi].push(100.0); // Varsayılan değer
-                }
-              }
+          try {
+            const raw = row[col]?.toString() || '';
+            const indexValue = parseFloat(raw || '0');
+            if (Number.isFinite(indexValue)) {
+              gruplarData[grupAdi].push(indexValue);
+            } else {
+              // Geçersiz ise önceki değeri veya 100 kullan
+              const arr = gruplarData[grupAdi];
+              arr.push(arr.length > 0 ? arr[arr.length - 1] : 100.0);
             }
+          } catch (e) {
+            const arr = gruplarData[grupAdi];
+            arr.push(arr.length > 0 ? arr[arr.length - 1] : 100.0);
           }
         }
       }
@@ -117,7 +127,7 @@ export class GruplarService {
   }> {
     try {
       const csvData = await GitHubCSVService.loadCSVFromGitHub(
-        'gruplaraylik.csv',
+        'gruplaraylıkv2.csv',
         false
       );
 
@@ -205,40 +215,37 @@ export class GruplarService {
   static async getGrupNames(): Promise<string[]> {
     try {
       const csvData = await GitHubCSVService.loadCSVFromGitHub(
-        'gruplar.csv',
+        'gruplarv2.csv',
         false
       );
 
       const lines = csvData.split(/\r?\n/);
-      const rows: any[][] = [];
-
       for (const line of lines) {
-        if (line.trim()) {
-          try {
-            const parsed = Papa.parse(line, {
-              header: false,
-              skipEmptyLines: true,
-            });
-            if (parsed.data.length > 0 && Array.isArray(parsed.data[0])) {
-              rows.push(parsed.data[0] as any[]);
+        if (!line.trim()) continue;
+        try {
+          const parsed = Papa.parse(line, {
+            header: false,
+            skipEmptyLines: true,
+          });
+          if (parsed.data.length === 0 || !Array.isArray(parsed.data[0])) {
+            continue;
+          }
+          const headerRow = parsed.data[0] as any[];
+          const grupNames: string[] = [];
+          for (let col = 1; col < headerRow.length; col++) {
+            const grupAdi = headerRow[col]?.toString().trim() || '';
+            if (grupAdi) {
+              grupNames.push(grupAdi);
             }
-          } catch (e) {
-            // Skip parse errors
           }
+          return grupNames;
+        } catch (e) {
+          // bir sonraki satırı dene
+          continue;
         }
       }
 
-      const grupNames: string[] = [];
-      for (let i = 1; i < rows.length; i++) {
-        if (rows[i].length >= 1) {
-          const grupAdi = rows[i][0]?.toString().trim() || '';
-          if (grupAdi) {
-            grupNames.push(grupAdi);
-          }
-        }
-      }
-
-      return grupNames;
+      return [];
     } catch (e) {
       console.log('Grup adları yüklenirken hata:', e);
       return [];
