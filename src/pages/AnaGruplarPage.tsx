@@ -78,18 +78,29 @@ const AnaGruplarPage = () => {
       setMonthlyDates(monthlyDatesList);
 
       updateChartData(indexData, monthlyData, dates, monthlyDatesList);
-      
+
       // Yıllık değişimi CSV'den oku
       try {
         const yearlyChange = await GruplarService.getYearlyChange(grupName);
         setYearToDateChange(yearlyChange);
+        console.log(
+          '[AnaGruplarPage] Yıllık değişim okundu',
+          'grup=',
+          grupName,
+          'value=',
+          yearlyChange,
+        );
       } catch (e) {
         console.log('Yıllık değişim okuma hatası:', e);
         // Fallback: eski mantık
-        setYearToDateChange(indexData.length > 0 ? indexData[indexData.length - 1] - 100.0 : 0);
+        setYearToDateChange(
+          indexData.length > 0 ? indexData[indexData.length - 1] - 100.0 : 0,
+        );
       }
-      
-      setMonthlyChange(monthlyData.length > 0 ? monthlyData[monthlyData.length - 1] : 0);
+
+      setMonthlyChange(
+        monthlyData.length > 0 ? monthlyData[monthlyData.length - 1] : 0,
+      );
     } catch (e) {
       console.log('Error loading grup data:', e);
     }

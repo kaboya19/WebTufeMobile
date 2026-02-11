@@ -317,62 +317,55 @@ export class GruplarService {
    */
   static async getYearlyChange(grupAdi: string): Promise<number> {
     try {
+      // 1) Kolon indeksini her zaman referans dosya olan gruplarv2.csv'den al
+      const gruplarCsv = await GitHubCSVService.loadCSVFromGitHub(
+        'gruplarv2.csv',
+        false,
+      );
+      const gruplarLines = gruplarCsv.split(/\r?\n/).filter(line => line.trim());
+      if (gruplarLines.length === 0) {
+        console.log('gruplarv2.csv boş veya okunamadı');
+        return 0.0;
+      }
+
+      const gruplarHeaderParsed = Papa.parse(gruplarLines[0], {
+        header: false,
+        skipEmptyLines: true,
+      });
+
+      if (
+        gruplarHeaderParsed.data.length === 0 ||
+        !Array.isArray(gruplarHeaderParsed.data[0])
+      ) {
+        console.log('gruplarv2.csv header parse edilemedi');
+        return 0.0;
+      }
+
+      const gruplarHeaderRow = gruplarHeaderParsed.data[0] as any[];
+
+      // gruplarv2.csv içindeki kolon sırasına göre grup index'ini bul
+      const targetNorm = this.normalizeKey(grupAdi);
+      let columnIndex = -1;
+      for (let i = 0; i < gruplarHeaderRow.length; i++) {
+        const headerName = gruplarHeaderRow[i]?.toString() ?? '';
+        const normalizedHeader = this.normalizeKey(headerName);
+        if (normalizedHeader === targetNorm) {
+          columnIndex = i;
+          break;
+        }
+      }
+
+      if (columnIndex === -1) {
+        console.log(`gruplarv2.csv'de grup bulunamadı: ${grupAdi}`);
+        return 0.0;
+      }
+
+      // 2) Aynı kolon index'ini kullanarak yıllık değişimi gruplaryıllık.csv'den oku
       const csvData = await GitHubCSVService.loadCSVFromGitHub('gruplaryıllık.csv', true);
       const lines = csvData.split(/\r?\n/).filter(line => line.trim());
       
       if (lines.length < 2) {
         console.log('gruplaryıllık.csv dosyası yeterli veri içermiyor');
-        return 0.0;
-      }
-      
-      // İlk satır header
-      const headerLine = lines[0];
-      const parsedHeader = Papa.parse(headerLine, {
-        header: false,
-        skipEmptyLines: true,
-      });
-      
-      if (parsedHeader.data.length === 0 || !Array.isArray(parsedHeader.data[0])) {
-        console.log('gruplaryıllık.csv header parse edilemedi');
-        return 0.0;
-      }
-      
-      const headerRow = parsedHeader.data[0] as any[];
-
-      // Debug: header ve hedef grup adını logla
-      try {
-        const normalizedHeaders = headerRow.map((h) =>
-          this.normalizeKey(h?.toString() ?? '')
-        );
-        const targetNorm = this.normalizeKey(grupAdi);
-        console.log(
-          '[getYearlyChange] grupAdi=',
-          grupAdi,
-          'targetNorm=',
-          targetNorm,
-          'headerRaw=',
-          headerRow,
-          'headerNorm=',
-          normalizedHeaders,
-        );
-      } catch (e) {
-        console.log('[getYearlyChange] header debug log error:', e);
-      }
-      
-      // Grup adının sütun index'ini bul (normalize ederek)
-      const target = this.normalizeKey(grupAdi);
-      let columnIndex = -1;
-      for (let i = 0; i < headerRow.length; i++) {
-        const headerName = headerRow[i]?.toString() ?? '';
-        const normalizedHeader = this.normalizeKey(headerName);
-        if (normalizedHeader === target) {
-          columnIndex = i;
-          break;
-        }
-      }
-      
-      if (columnIndex === -1) {
-        console.log(`gruplaryıllık.csv'de grup bulunamadı: ${grupAdi}`);
         return 0.0;
       }
       
