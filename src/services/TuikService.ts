@@ -18,6 +18,15 @@ export class TuikService {
       .replace(/ç/g, 'c');
   }
 
+  // Web ana grup isimlerini TÜİK CSV kolon isimlerine map etmek için
+  private static mapToTuikGrupName(grupName: string): string {
+    const trimmed = (grupName || '').trim();
+    if (trimmed === 'Eğlence,spor ve kültür') {
+      return 'Eğlence, dinlence, spor ve kültür';
+    }
+    return grupName;
+  }
+
   private static findColumnIndex(headerRow: any[], columnName: string): number {
     const target = this.normalizeKey(columnName);
     // Direct match
@@ -116,10 +125,11 @@ export class TuikService {
     data: {[key: string]: number[]};
   }> {
     // tüik_anagruplarv2.csv: YYYY-MM-DD tarihli ve ana grup kolonları mevcut
+    const csvGrupName = this.mapToTuikGrupName(grupName);
     return await this.loadTuikColumnFromCsv(
       'tüik_anagruplarv2.csv',
-      grupName,
-      `TÜİK ${grupName}`,
+      csvGrupName,
+      `TÜİK ${grupName}`, // output key her zaman orijinal isimle kalsın
       true
     );
   }
@@ -159,10 +169,11 @@ export class TuikService {
   }> {
     // tüik_anagruplaraylikv2.csv: YYYY-MM-DD tarihli ve ana grup aylık değişim kolonları mevcut
     // date conversion gerekmiyor; AnaGruplarPage year-month match yapıyor
+    const csvGrupName = this.mapToTuikGrupName(grupName);
     return await this.loadTuikColumnFromCsv(
       'tüik_anagruplaraylikv2.csv',
-      grupName,
-      `TÜİK ${grupName}`,
+      csvGrupName,
+      `TÜİK ${grupName}`, // output key orijinal isim
       false
     );
   }

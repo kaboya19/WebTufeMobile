@@ -34,7 +34,7 @@ export class CSVService {
   static async loadTufeData(): Promise<TufeDataModel[]> {
     try {
       const csvData = await GitHubCSVService.loadCSVFromGitHub(
-        'gruplaraylik.csv',
+        'gruplaraylıkv2.csv',
         false
       );
 
@@ -113,7 +113,7 @@ export class CSVService {
   static async getMonthFromCSV(): Promise<string> {
     try {
       const csvData = await GitHubCSVService.loadCSVFromGitHub(
-        'gruplaraylik.csv',
+        'gruplaraylıkv2.csv',
         false
       );
 
@@ -159,7 +159,7 @@ export class CSVService {
   static async getTufeMonthlyChange(): Promise<number> {
     try {
       const csvData = await GitHubCSVService.loadCSVFromGitHub(
-        'gruplaraylik.csv',
+        'gruplaraylıkv2.csv',
         false
       );
 
@@ -212,7 +212,7 @@ export class CSVService {
   static async getAvailableDates(): Promise<string[]> {
     try {
       const csvData = await GitHubCSVService.loadCSVFromGitHub(
-        'gruplaraylik.csv',
+        'gruplaraylıkv2.csv',
         false
       );
 
@@ -261,7 +261,7 @@ export class CSVService {
   ): Promise<TufeDataModel[]> {
     try {
       const csvData = await GitHubCSVService.loadCSVFromGitHub(
-        'gruplaraylik.csv',
+        'gruplaraylıkv2.csv',
         false
       );
 

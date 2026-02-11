@@ -7,14 +7,12 @@ const CHART_PADDING = 32;
 
 interface TufeChartProps {
   data: TufeDataModel[];
-  contributions?: Record<string, number>;
   showContributions?: boolean;
 }
 
 const TufeChart: React.FC<TufeChartProps> = ({
   data,
-  contributions = {},
-  showContributions = true,
+  showContributions = false,
 }) => {
   if (data.length === 0) {
     return (
@@ -26,10 +24,6 @@ const TufeChart: React.FC<TufeChartProps> = ({
 
   // Tüm değerlerden maksimum mutlak değeri bul
   const maxAbsChange = Math.max(...data.map((e) => Math.abs(e.changeRate)), 0.01);
-  const maxAbsContrib = Math.max(
-    ...data.map((e) => Math.abs(contributions[e.groupName] ?? 0)),
-    0.01
-  );
 
   return (
     <View style={styles.container}>
@@ -38,13 +32,6 @@ const TufeChart: React.FC<TufeChartProps> = ({
           <Text style={styles.headerText}>Değişim (%)</Text>
         </View>
         <View style={styles.centerLabel} />
-        {showContributions ? (
-          <View style={styles.graphContainer}>
-            <Text style={styles.headerText}>Katkı (puan)</Text>
-          </View>
-        ) : (
-          <View style={styles.graphContainer} />
-        )}
       </View>
 
       {data.map((tufeData, index) => (
@@ -52,9 +39,6 @@ const TufeChart: React.FC<TufeChartProps> = ({
           key={index}
           tufeData={tufeData}
           maxAbsChange={maxAbsChange}
-          maxAbsContrib={maxAbsContrib}
-          contribution={contributions[tufeData.groupName] ?? 0}
-          showContributions={showContributions}
         />
       ))}
     </View>
@@ -64,29 +48,20 @@ const TufeChart: React.FC<TufeChartProps> = ({
 interface BarItemProps {
   tufeData: TufeDataModel;
   maxAbsChange: number;
-  maxAbsContrib: number;
-  contribution: number;
-  showContributions: boolean;
 }
 
 const BarItem: React.FC<BarItemProps> = ({
   tufeData,
   maxAbsChange,
-  maxAbsContrib,
-  contribution,
-  showContributions,
 }) => {
   const chartWidth = SCREEN_WIDTH - CHART_PADDING;
-  const barAreaWidth = (chartWidth * 2.5) / 10; // left change - daha küçük
-  const barAreaWidthRight = (chartWidth * 2.5) / 10; // right contribution - daha küçük
+  // Bar alanını daha küçük yap - flex container genişliğinin %70'i kadar
+  const barAreaWidth = (chartWidth * 1.5) / 10 * 0.7;
   const centerX = barAreaWidth / 2;
-  const centerXRight = 0; // axis at left for contribution
 
   // Bar genişliğini hesapla - alan küçüldüğü için yüzdeyi artırıyoruz
   const changeWidth =
     maxAbsChange > 0 ? (Math.abs(tufeData.changeRate) / maxAbsChange) * (barAreaWidth * 0.85) : 0;
-  const contribWidth =
-    maxAbsContrib > 0 ? (Math.abs(contribution) / maxAbsContrib) * (barAreaWidthRight * 0.85) : 0;
 
   // Pozitif/negatif durumuna göre renk
   let barColor: string;
@@ -110,20 +85,6 @@ const BarItem: React.FC<BarItemProps> = ({
     : tufeData.changeRate >= 0
       ? centerX + changeWidth + labelGap
       : Math.max(0, centerX - changeWidth - labelMinWidth - labelGap);
-
-  const contribColor = contribution >= 0 ? '#22c55e' : '#86efac';
-  const contribLeft = contribution >= 0 ? centerXRight : centerXRight - contribWidth;
-  const contribLabelMinWidth = 35;
-  const contribLabelLeft = (() => {
-    if (tufeData.groupName === 'Web TÜFE') return centerXRight + contribWidth + labelGap;
-    const inside = contribWidth >= 40;
-    if (inside) {
-      return contribution >= 0 ? contribLeft + contribWidth - contribLabelMinWidth + 2 : contribLeft + 3;
-    }
-    return contribution >= 0
-      ? centerXRight + contribWidth + labelGap
-      : Math.max(0, centerXRight - contribWidth - contribLabelMinWidth - labelGap);
-  })();
 
   return (
     <View style={styles.barContainer}>
@@ -161,36 +122,6 @@ const BarItem: React.FC<BarItemProps> = ({
           {tufeData.displayName}
         </Text>
       </View>
-
-      {/* Katkı barı */}
-      {showContributions ? (
-        <View style={styles.graphContainer}>
-          <View style={styles.graphArea}>
-            <View style={[styles.centerLine, {left: centerXRight}]} />
-            {tufeData.groupName !== 'Web TÜFE' && contribution !== 0 && (
-              <View
-                style={[
-                  styles.bar,
-                  {
-                    left: contribLeft,
-                    width: contribWidth,
-                    backgroundColor: contribColor,
-                  },
-                ]}
-              />
-            )}
-            <View style={[styles.valueLabel, {left: contribLabelLeft}]}>
-              <Text style={styles.valueText}>
-                {tufeData.groupName === 'Web TÜFE'
-                  ? ''
-                  : `${contribution >= 0 ? '+' : ''}${contribution.toFixed(2)}`}
-              </Text>
-            </View>
-          </View>
-        </View>
-      ) : (
-        <View style={styles.graphContainer} />
-      )}
     </View>
   );
 };
@@ -227,7 +158,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   graphContainer: {
-    flex: 2.5,
+    flex: 1.5,
     minHeight: 40,
     justifyContent: 'center',
   },
@@ -264,11 +195,12 @@ const styles = StyleSheet.create({
     color: '#ffffff',
   },
   centerLabel: {
-    flex: 5,
-    paddingHorizontal: 8,
-    alignItems: 'center',
+    flex: 2,
+    paddingHorizontal: 0,
+    alignItems: 'flex-start',
     justifyContent: 'center',
     minHeight: 40,
+    paddingLeft: 4,
   },
   groupText: {
     fontSize: 10.5,

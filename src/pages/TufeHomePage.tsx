@@ -31,16 +31,11 @@ const TufeHomePage = () => {
   const [availableDates, setAvailableDates] = useState<string[]>([]);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
-  const [contributionItems, setContributionItems] = useState<
-    Array<{groupName: string; contribution: number; normalizedKey: string}>
-  >([]);
-
   const [newsletterEmail, setNewsletterEmail] = useState('');
   const [isSubscribing, setIsSubscribing] = useState(false);
   const [newsletterMessage, setNewsletterMessage] = useState<string | null>(null);
   const [newsletterError, setNewsletterError] = useState<string | null>(null);
   const newsletterEmailRef = useRef('');
-  const [showContributions, setShowContributions] = useState(true);
 
   useEffect(() => {
     initializeData();
@@ -60,7 +55,6 @@ const TufeHomePage = () => {
 
       // Verileri yükle
       await loadCSVData();
-      await loadContributionData(initialDate || undefined);
     } catch (e) {
       setIsLoading(false);
       setErrorMessage(String(e));
@@ -93,7 +87,6 @@ const TufeHomePage = () => {
       setDisplayedDataDate(dataFreshness.displayedDate);
       setIsLoading(false);
       setErrorMessage(null);
-      await loadContributionData(effectiveDate || undefined);
     } catch (e) {
       setIsLoading(false);
       setErrorMessage(String(e));
@@ -101,14 +94,6 @@ const TufeHomePage = () => {
     }
   };
 
-  const loadContributionData = async (dateParam?: string) => {
-    try {
-      const contrib = await CSVService.loadContributionData(dateParam);
-      setContributionItems(contrib);
-    } catch (e) {
-      console.log('Katkı verisi yüklenemedi:', e);
-    }
-  };
 
   const checkDataFreshness = async (): Promise<{
     isOutdated: boolean;
@@ -143,7 +128,7 @@ const TufeHomePage = () => {
 
             // Ekranda gösterilen veri tarihini al (aylık CSV'den - cache kullan)
             const monthlyData = await GitHubCSVService.loadCSVFromGitHub(
-              'gruplaraylik.csv',
+              'gruplaraylıkv2.csv',
               true
             );
             const monthlyLines = monthlyData.split(/\r?\n/);
@@ -387,20 +372,8 @@ const TufeHomePage = () => {
         <View style={styles.chartWrapper}>
           <TufeChart
             data={tufeDataList}
-            contributions={Object.fromEntries(
-              contributionItems.map((c) => [c.groupName, c.contribution])
-            )}
-            showContributions={showContributions}
+            showContributions={false}
           />
-
-          <TouchableOpacity
-            style={styles.floatCheckbox}
-            onPress={() => setShowContributions((p) => !p)}>
-            <View style={[styles.checkbox, showContributions && styles.checkboxChecked]}>
-              {showContributions && <Icon name="check" size={14} color="#fff" />}
-            </View>
-            <Text style={styles.checkboxLabel}>Katkıları göster</Text>
-          </TouchableOpacity>
         </View>
 
         <View style={styles.newsletterCard}>
