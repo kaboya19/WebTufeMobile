@@ -361,7 +361,11 @@ export class GruplarService {
       }
 
       // 2) Aynı kolon index'ini kullanarak yıllık değişimi gruplaryıllık.csv'den oku
-      const csvData = await GitHubCSVService.loadCSVFromGitHub('gruplaryıllık.csv', true);
+      //    Cache kullanma ki son güncel değer her zaman okunsun
+      const csvData = await GitHubCSVService.loadCSVFromGitHub(
+        'gruplaryıllık.csv',
+        false,
+      );
       const lines = csvData.split(/\r?\n/).filter(line => line.trim());
       
       if (lines.length < 2) {

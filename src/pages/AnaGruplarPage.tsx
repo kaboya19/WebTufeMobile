@@ -40,6 +40,15 @@ const AnaGruplarPage = () => {
     return dateStr;
   };
 
+  // Web gruplarını TÜİK ana grup isimlerine map etmek için
+  const mapToTuikGrupName = (grupName: string): string => {
+    const trimmed = (grupName || '').trim();
+    if (trimmed === 'Eğlence,spor ve kültür') {
+      return 'Eğlence, dinlence, spor ve kültür';
+    }
+    return grupName;
+  };
+
   useEffect(() => {
     loadData();
   }, []);
@@ -220,7 +229,9 @@ const AnaGruplarPage = () => {
     if (!selectedGrup) return {};
 
     try {
-      const tuikData = await TuikService.loadTuikAnaGrupEndeksData(selectedGrup);
+      const tuikData = await TuikService.loadTuikAnaGrupEndeksData(
+        mapToTuikGrupName(selectedGrup),
+      );
 
       const result: {[key: string]: Array<{x: number; y: number}>} = {};
 
@@ -296,7 +307,9 @@ const AnaGruplarPage = () => {
     if (!selectedGrup) return {};
 
     try {
-      const tuikData = await TuikService.loadTuikAnaGrupData(selectedGrup);
+      const tuikData = await TuikService.loadTuikAnaGrupData(
+        mapToTuikGrupName(selectedGrup),
+      );
 
       const result: {[key: string]: Array<{x: number; y: number}>} = {};
       const tuikDates = tuikData.dates as string[];
