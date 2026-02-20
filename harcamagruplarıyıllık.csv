@@ -1,41 +1,41 @@
 Grup,2026-02-28
-Pirinç,26.830492306470475
-Un ve diğer tahıllar,26.41222190679775
-Ekmek,41.602208756770494
-"Diğer fırıncılık ürünleri (bisküvi, kek, kraker, yufka, baklava vb.)",30.827203082555886
-Makarna çeşitleri,34.853385311315456
-Kahvaltılık tahıl ürünleri,37.1034211802139
-Dana eti,48.92016415402711
-Kuzu eti,35.51419930037809
-Tavuk eti,19.262864303184713
-Diğer etler ve yenilebilir sakatatlar,8.358914184851262
-"Şarküteri ürünleri (sucuk, sosis, salam vb.)",35.643500512339465
-Taze balık,48.67946064100559
-Konserve edilmiş veya işlenmiş balık,33.94453511092361
-Süt,36.40910735721818
-"Diğer süt ürünleri (yoğurt, hazır sütlü tatlı vb.)",31.67252226415296
-Peynir,31.819751923073248
+Pirinç,26.77870577479229
+Un ve diğer tahıllar,26.189626483809892
+Ekmek,41.608370017020135
+"Diğer fırıncılık ürünleri (bisküvi, kek, kraker, yufka, baklava vb.)",30.72789238461371
+Makarna çeşitleri,34.66292578065511
+Kahvaltılık tahıl ürünleri,36.99778877782405
+Dana eti,48.820046600366936
+Kuzu eti,35.431284997720546
+Tavuk eti,19.276967456044837
+Diğer etler ve yenilebilir sakatatlar,8.599731076261063
+"Şarküteri ürünleri (sucuk, sosis, salam vb.)",35.597464988378235
+Taze balık,48.66065947719047
+Konserve edilmiş veya işlenmiş balık,33.93994514502785
+Süt,36.445489394464616
+"Diğer süt ürünleri (yoğurt, hazır sütlü tatlı vb.)",31.63945733747542
+Peynir,31.804021594374454
 Yumurta,18.928302280512344
-Tereyağı,39.45984915480505
-Margarin,40.78008956365413
-"Sıvı yağlar (zeytinyağı, ayçiçek yağı)",31.299958924231362
-Taze meyveler,33.93935766655045
-Kuru meyve ve sert kabuklu yemişler,35.35099951367751
-Taze sebzeler (patates hariç),69.92700982715927
-Patates,29.113554436215573
-Kuru baklagiller,32.64877058801792
-"Konserve edilmiş veya işlenmiş sebze içerikli ürünler (salça, turşu, zeytin vb. dahil)",30.083970780178284
-Şeker,9.727717897155564
-"Reçel, marmelat, bal vb. ürünler",32.025434128785136
-Çikolata ve şekerlemeler,23.807706014843987
-Dondurma,27.266311130308196
-Kahve,43.66496044173758
-Çay ve bitki çayları,33.375390417506345
-Toz kakao,33.602597314597645
-Su ve maden suyu,29.207315186766003
-"Alkolsüz içecekler (meşrubat, ayran vb.)",36.68091966474263
-Meyve ve sebze suları,39.12588055213235
-"Alkollü içecekler (rakı, viski, votka vb.)",21.68028731806304
+Tereyağı,39.41596141687948
+Margarin,40.762356322515615
+"Sıvı yağlar (zeytinyağı, ayçiçek yağı)",31.13328345733093
+Taze meyveler,33.81977883045975
+Kuru meyve ve sert kabuklu yemişler,35.16666989893953
+Taze sebzeler (patates hariç),69.64395291450205
+Patates,28.990778263347107
+Kuru baklagiller,32.53854916665644
+"Konserve edilmiş veya işlenmiş sebze içerikli ürünler (salça, turşu, zeytin vb. dahil)",29.99139524928154
+Şeker,9.713650794452455
+"Reçel, marmelat, bal vb. ürünler",31.9743272480665
+Çikolata ve şekerlemeler,23.790799220298297
+Dondurma,27.275489160858136
+Kahve,43.63679574245274
+Çay ve bitki çayları,33.33610209755906
+Toz kakao,33.246378399053775
+Su ve maden suyu,29.195861814442026
+"Alkolsüz içecekler (meşrubat, ayran vb.)",36.672476954162
+Meyve ve sebze suları,39.08142984058074
+"Alkollü içecekler (rakı, viski, votka vb.)",21.680287318063062
 Şarap,8.528102772964651
 Bira,26.8977309637199
 Sigaralar,35.101638762763734
@@ -53,8 +53,8 @@ Gerçek kira,61.487670971595506
 Konutun bakım ve onarımı için malzemeler,33.87275107533121
 Su (şebeke suyu),25.68732053923417
 Elektrik,33.12500000000005
-Doğalgaz ve ilgili abonelik ücretleri,24.569612976624455
-Tüpgaz (ev tüpü),28.515405060985756
+Doğalgaz ve ilgili abonelik ücretleri,24.569612976624434
+Tüpgaz (ev tüpü),28.51540506098591
 "Katı yakıtlar (odun, kömür)",35.8879439093658
 Mutfak mobilyaları,14.60210840529359
 Yatak odası mobilyaları,20.5547605808595
@@ -71,7 +71,7 @@ Elektrikli küçük ev aletleri,15.426975538514686
 Çatal-bıçak takımı,12.977668753021533
 "Elektriksiz mutfak eşyaları ve ev gereçleri (tencere, tava, çaydanlık vb.)",16.259511943003947
 "Çeşitli küçük aksesuarlar (pil, ampul vb.)",25.968502732924748
-Evle ilgili küçük bakım-tamir mal ve hizmetleri,16.003304993829516
+Evle ilgili küçük bakım-tamir mal ve hizmetleri,16.00330499382947
 "Ev ile ilgili temizlik malzemeleri (deterjan, yumuşatıcı vb.)",15.72436163654125
 "Ev ile ilgili diğer temizlik malzemeleri (bulaşık süngeri, çöp torbası vb.)",26.11365275411519
 Ev içi hizmetler (gündelikçi ücreti),28.249931232013804
@@ -90,7 +90,7 @@ Otobüs ile şehir içi yolcu taşımacılığı,32.79181479534827
 Karayolu ile şehirler arası yolcu taşımacılığı,22.19388707384966
 Havayolu ile yolcu taşımacılığı,58.59521377990655
 Deniz ve yurt içi su yolu ile yolcu taşımacılığı,38.87344633058345
-"Diğer satın alınan ulaştırma hizmetleri (nakliye, kargo vb.)",22.069874947083456
+"Diğer satın alınan ulaştırma hizmetleri (nakliye, kargo vb.)",22.069874947083502
 "Mobil telefon, ekipman ve aksesuarları",5.553306482314868
 Telefon (mobil ve sabit hat) ve internet ücretleri,16.55754714700757
 Televizyonlar,10.635115947316232
@@ -99,7 +99,7 @@ Müzik enstrümanları,18.141758481711022
 "Oyunlar, oyuncaklar ve hobiler",16.92963131610714
 "Spor, kamp ve açık hava eğlence malzemeleri",18.557382475573082
 Evcil hayvanlar ile ilgili ürünler,10.378070731066892
-Evcil hayvanlarla ilgili veterinerlik ve diğer hizmetler,35.041087315453545
+Evcil hayvanlarla ilgili veterinerlik ve diğer hizmetler,35.04108731545361
 Kitaplar,18.71535754842377
 Kırtasiye malzemeleri,17.021166360494888
 Okul öncesi eğitim ve ilköğretim,41.12785466953066
@@ -112,9 +112,9 @@ Erkekler için kuaförlük hizmetleri,91.0828564357492
 Kadınlar için kuaförlük hizmetleri,66.66479478234331
 Kişisel bakımda kullanılan elektrikli aletler,16.54623459615536
 "Kişisel hijyen ve bakım için kullanılan ürünler, kozmetikler",14.39866620466077
-"Mücevheratlar, saat ve kol saatleri",90.21473708645648
+"Mücevheratlar, saat ve kol saatleri",90.21473708645644
 Seyahat malzemeleri ve diğer kişisel aksesuarlar,22.043920775709203
 Başka yerde sınıflandırılmamış diğer kişisel aksesuarlar,17.88411104339591
-Başka yerde sınıflandırılmayan diğer mali hizmetler (para havale ücreti vb.),30.91076551839207
-"Başka yerde sınıflandırılamayan diğer gıda ürünleri (tuz, sirke, ketçap, mayonez vb.)",24.99464420048878
+Başka yerde sınıflandırılmayan diğer mali hizmetler (para havale ücreti vb.),30.910765518392115
+"Başka yerde sınıflandırılamayan diğer gıda ürünleri (tuz, sirke, ketçap, mayonez vb.)",24.86102554831
 TÜFE,
