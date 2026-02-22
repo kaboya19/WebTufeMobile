@@ -199,7 +199,7 @@ export class MaddelerService {
   }> {
     try {
       const csvData = await GitHubCSVService.loadCSVFromGitHub(
-        'maddeleraylık.csv'
+        'maddeleraylik.csv'
       );
 
       const lines = csvData.split(/\r?\n/);

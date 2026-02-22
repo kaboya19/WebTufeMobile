@@ -242,13 +242,17 @@ const TufePage = () => {
       setYearToDateChange(yearlyChange);
 
       try {
-        const monthlyArray = await GruplarService.getGrupMonthlyChangeData(
-          selectedEndeks,
-        );
-        const lastMonthly =
-          monthlyArray.length > 0
-            ? monthlyArray[monthlyArray.length - 1]
+        let lastMonthly = 0.0;
+        if (selectedEndeks === 'Web TÜFE') {
+          const monthlyArray = await GruplarService.getGrupMonthlyChangeData('Web TÜFE');
+          lastMonthly = monthlyArray.length > 0 ? monthlyArray[monthlyArray.length - 1] : 0.0;
+        } else {
+          // Maddeler için maddeleraylik.csv'den oku
+          const maddeMonthly = await MaddelerService.getMaddeMonthlyChangeData(selectedEndeks);
+          lastMonthly = maddeMonthly.values.length > 0
+            ? maddeMonthly.values[maddeMonthly.values.length - 1]
             : 0.0;
+        }
         setMonthlyChange(lastMonthly);
       } catch (e) {
         console.log('Aylık değişim okuma hatası:', e);

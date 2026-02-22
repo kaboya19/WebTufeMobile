@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../models/harcama_grubu_data.dart';
-import '../services/tuik_service.dart';
 
-class HarcamaGrubuAylikChart extends StatefulWidget {
+class HarcamaGrubuAylikChart extends StatelessWidget {
   final List<HarcamaGrubuAylikData> data;
   final String selectedGrup;
 
@@ -14,51 +13,8 @@ class HarcamaGrubuAylikChart extends StatefulWidget {
   });
 
   @override
-  State<HarcamaGrubuAylikChart> createState() => _HarcamaGrubuAylikChartState();
-}
-
-class _HarcamaGrubuAylikChartState extends State<HarcamaGrubuAylikChart> {
-  Map<String, dynamic> tuikData = {'dates': [], 'data': {}};
-  bool isLoadingTuik = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadTuikData();
-  }
-
-  @override
-  void didUpdateWidget(HarcamaGrubuAylikChart oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.selectedGrup != widget.selectedGrup) {
-      _loadTuikData();
-    }
-  }
-
-  Future<void> _loadTuikData() async {
-    setState(() {
-      isLoadingTuik = true;
-    });
-
-    try {
-      final result =
-          await TuikService.loadTuikHarcamaGrubuData(widget.selectedGrup);
-      setState(() {
-        tuikData = result;
-        isLoadingTuik = false;
-      });
-    } catch (e) {
-      print('TÜİK veri yükleme hatası: $e');
-      setState(() {
-        tuikData = {'dates': [], 'data': {}};
-        isLoadingTuik = false;
-      });
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
-    if (widget.data.isEmpty) {
+    if (data.isEmpty) {
       return const Center(
         child: Text(
           'Grafik verisi bulunamadı',
@@ -67,86 +23,10 @@ class _HarcamaGrubuAylikChartState extends State<HarcamaGrubuAylikChart> {
       );
     }
 
-    if (isLoadingTuik) {
-      return Card(
-        margin: const EdgeInsets.all(16),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              Text(
-                '${widget.selectedGrup} - Aylık Değişim (%)',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-              ),
-              const SizedBox(height: 100),
-              const CircularProgressIndicator(),
-              const SizedBox(height: 16),
-              const Text('TÜİK verileri yükleniyor...'),
-            ],
-          ),
-        ),
-      );
-    }
+    List<String> allDates = data.map((item) => item.tarih).toList();
+    List<double> webTufeValues = data.map((item) => item.degisimOrani).toList();
 
-    // Tüm verileri birleştir (Web TÜFE + TÜİK)
-    List<String> allDates = [];
-    List<double> webTufeValues = [];
-    List<double> tuikValues = [];
-
-    // Web TÜFE verilerini al
-    Map<String, double> webTufeMap = {};
-    for (var item in widget.data) {
-      webTufeMap[item.tarih] = item.degisimOrani;
-    }
-
-    // TÜİK verilerini al
-    Map<String, double> tuikMap = {};
-    if (tuikData['dates'] != null && tuikData['data'] != null) {
-      List<String> tuikDates = List<String>.from(tuikData['dates']);
-      String tuikKey =
-          tuikData['data'].keys.isNotEmpty ? tuikData['data'].keys.first : '';
-      if (tuikKey.isNotEmpty) {
-        List<double> tuikDataValues =
-            List<double>.from(tuikData['data'][tuikKey]);
-        for (int i = 0;
-            i < tuikDates.length && i < tuikDataValues.length;
-            i++) {
-          tuikMap[tuikDates[i]] = tuikDataValues[i];
-        }
-      }
-    }
-
-    // Ortak tarih listesi oluştur (daha uzun olanı kullan)
-    Set<String> allDatesSet = {...webTufeMap.keys, ...tuikMap.keys};
-    allDates = allDatesSet.toList()..sort();
-
-    // Her tarih için değerleri hazırla
-    for (String date in allDates) {
-      webTufeValues.add(webTufeMap[date] ?? 0.0);
-      tuikValues.add(tuikMap[date] ?? double.nan); // Eksik veri için NaN kullan
-    }
-
-    if (allDates.isEmpty) {
-      return const Center(
-        child: Text(
-          'Karşılaştırma için uygun veri bulunamadı',
-          style: TextStyle(fontSize: 16),
-        ),
-      );
-    }
-
-    // Y ekseni için min/max değerleri hesapla (NaN değerleri hariç)
-    List<double> allValues = [
-      ...webTufeValues,
-      ...tuikValues.where((v) => !v.isNaN)
-    ];
-    if (allValues.isEmpty) {
-      allValues = webTufeValues; // Sadece Web TÜFE verileri kullan
-    }
+    List<double> allValues = webTufeValues;
     double minY = allValues.reduce((a, b) => a < b ? a : b);
     double maxY = allValues.reduce((a, b) => a > b ? a : b);
 
@@ -179,8 +59,6 @@ class _HarcamaGrubuAylikChartState extends State<HarcamaGrubuAylikChart> {
     double adjustedMinY = (minY / yInterval).floor() * yInterval;
     double adjustedMaxY = (maxY / yInterval).ceil() * yInterval + yInterval;
 
-    bool hasTuikData = tuikMap.isNotEmpty;
-
     return Card(
       margin: const EdgeInsets.all(16),
       child: Padding(
@@ -189,7 +67,7 @@ class _HarcamaGrubuAylikChartState extends State<HarcamaGrubuAylikChart> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '${widget.selectedGrup} - Aylık Değişim (%) ${hasTuikData ? "Karşılaştırması" : ""}',
+              '$selectedGrup - Aylık Değişim (%)',
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -197,20 +75,6 @@ class _HarcamaGrubuAylikChartState extends State<HarcamaGrubuAylikChart> {
               ),
             ),
             const SizedBox(height: 12),
-
-            // Legend
-            if (hasTuikData) ...[
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _buildLegendItem(
-                      'Web TÜFE ${widget.selectedGrup}', Colors.blue),
-                  const SizedBox(width: 20),
-                  _buildLegendItem('TÜİK ${widget.selectedGrup}', Colors.red),
-                ],
-              ),
-              const SizedBox(height: 16),
-            ],
 
             SizedBox(
               height: 300,
@@ -308,7 +172,6 @@ class _HarcamaGrubuAylikChartState extends State<HarcamaGrubuAylikChart> {
                   minY: adjustedMinY,
                   maxY: adjustedMaxY,
                   lineBarsData: [
-                    // Web TÜFE çizgisi (Mavi)
                     LineChartBarData(
                       spots: webTufeValues.asMap().entries.map((entry) {
                         return FlSpot(entry.key.toDouble(), entry.value);
@@ -329,34 +192,6 @@ class _HarcamaGrubuAylikChartState extends State<HarcamaGrubuAylikChart> {
                         },
                       ),
                     ),
-
-                    // TÜİK çizgisi (Kırmızı) - sadece veri varsa
-                    if (hasTuikData)
-                      LineChartBarData(
-                        spots: tuikValues
-                            .asMap()
-                            .entries
-                            .where((entry) =>
-                                !entry.value.isNaN) // NaN değerleri filtrele
-                            .map((entry) {
-                          return FlSpot(entry.key.toDouble(), entry.value);
-                        }).toList(),
-                        isCurved: false,
-                        color: Colors.red,
-                        barWidth: 3,
-                        isStrokeCapRound: true,
-                        dotData: FlDotData(
-                          show: true,
-                          getDotPainter: (spot, percent, barData, index) {
-                            return FlDotCirclePainter(
-                              radius: 3,
-                              color: Colors.red,
-                              strokeWidth: 1,
-                              strokeColor: Colors.white,
-                            );
-                          },
-                        ),
-                      ),
                   ],
                   lineTouchData: LineTouchData(
                     enabled: true,
@@ -368,16 +203,12 @@ class _HarcamaGrubuAylikChartState extends State<HarcamaGrubuAylikChart> {
                           final index = touchedSpot.x.toInt();
                           if (index >= 0 && index < allDates.length) {
                             String date = allDates[index];
-                            String source =
-                                touchedSpot.barIndex == 0 ? 'Web TÜFE' : 'TÜİK';
                             double value = touchedSpot.y;
 
                             return LineTooltipItem(
-                              '$date\n$source\n${value.toStringAsFixed(2)}%',
-                              TextStyle(
-                                color: touchedSpot.barIndex == 0
-                                    ? Colors.blue
-                                    : Colors.red,
+                              '$date\nWeb TÜFE\n${value.toStringAsFixed(2)}%',
+                              const TextStyle(
+                                color: Colors.blue,
                                 fontWeight: FontWeight.bold,
                               ),
                             );
@@ -393,30 +224,6 @@ class _HarcamaGrubuAylikChartState extends State<HarcamaGrubuAylikChart> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildLegendItem(String label, Color color) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 12,
-          height: 12,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-          ),
-        ),
-        const SizedBox(width: 6),
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 12,
-            color: Colors.black87,
-          ),
-        ),
-      ],
     );
   }
 }

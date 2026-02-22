@@ -187,7 +187,7 @@ class _HarcamaGruplariPageState extends State<HarcamaGruplariPage> {
               children: [
                 Expanded(
                   child: _buildStatCard(
-                    'Yılbaşından Bu Yana',
+                    'Yıllık Değişim',
                     '${istatistik!.yillikDegisim.toStringAsFixed(2)}%',
                     istatistik!.yillikDegisim >= 0 ? Colors.green : Colors.red,
                   ),

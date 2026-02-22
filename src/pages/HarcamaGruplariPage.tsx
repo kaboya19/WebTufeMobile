@@ -12,7 +12,6 @@ import WebPicker from '../components/WebPicker';
 import {MaterialIcons as Icon} from '@expo/vector-icons';
 import LineChartWithHover from '../components/LineChartWithHover';
 import {HarcamaGruplariService} from '../services/HarcamaGruplariService';
-import {TuikService} from '../services/TuikService';
 import {
   AnaGrupData,
   HarcamaGrubuData,
@@ -199,105 +198,22 @@ const HarcamaGruplariPage = () => {
     if (!groupName || data.length === 0) return;
 
     try {
-      const tuikData = await TuikService.loadTuikHarcamaGrubuEndeksData(groupName);
-      const result: {[key: string]: Array<{x: number; y: number}>} = {};
+      const dates = data.map((d) => d.tarih);
+      const formattedDates = dates.map(formatDateToYearMonth);
 
-      if (data.length > 0) {
-        result['Web TÜFE'] = data.map((item, index) => ({
-          x: index,
-          y: item.endeks,
-        }));
-      }
+      if (selectedHarcamaGrubu !== groupName) return;
 
-      if (tuikData.data[`TÜİK ${groupName}`]) {
-        const tuikValues = tuikData.data[`TÜİK ${groupName}`] as number[];
-        const tuikDates = tuikData.dates as string[];
-
-        const tuikSeries: Array<{x: number; y: number | null}> = data.map(
-          (_, idx) => ({x: idx, y: null})
-        );
-
-        for (let tuikIndex = 0; tuikIndex < tuikDates.length; tuikIndex++) {
-          const tuikDate = tuikDates[tuikIndex];
-          const tuikValue = tuikValues[tuikIndex];
-
-          if (isNaN(tuikValue)) continue;
-
-          try {
-            const tuikDateParts = tuikDate.split('.');
-            if (tuikDateParts.length === 3) {
-              const tuikMonth = tuikDateParts[1];
-              const tuikYear = tuikDateParts[2];
-
-              let lastDayIndex = -1;
-              for (let webIndex = data.length - 1; webIndex >= 0; webIndex--) {
-                const webDate = data[webIndex].tarih;
-                const webDateParts = webDate.split('-');
-                if (webDateParts.length === 3) {
-                  const webMonth = webDateParts[1];
-                  const webYear = webDateParts[0];
-
-                  if (webMonth === tuikMonth && webYear === tuikYear) {
-                    lastDayIndex = webIndex;
-                    break;
-                  }
-                }
-              }
-
-              if (lastDayIndex !== -1) {
-                tuikSeries[lastDayIndex] = {x: lastDayIndex, y: tuikValue};
-              }
-            }
-          } catch (e) {
-            console.log('Tarih eşleştirme hatası:', e);
-          }
-        }
-
-        // Nokta -> bir sonraki öncesine kadar uzat; son noktadan sonrası da son değerle devam etsin
-        const tuikSpots = tuikSeries.filter((s) => s.y !== null && s.y !== undefined);
-        tuikSpots.sort((a, b) => a.x - b.x);
-        for (let i = 0; i < tuikSpots.length; i++) {
-          const currentSpot = tuikSpots[i];
-          const nextSpot = i < tuikSpots.length - 1 ? tuikSpots[i + 1] : null;
-          const endX = nextSpot ? nextSpot.x - 1 : tuikSeries.length - 1;
-          for (let x = currentSpot.x; x <= endX && x < tuikSeries.length; x++) {
-            tuikSeries[x].y = currentSpot.y;
-          }
-        }
-
-        result['TÜİK TÜFE'] = tuikSeries;
-      }
-
-      if (Object.keys(result).length > 0) {
-        const dates = data.map((d) => d.tarih);
-        const hasTuikData = result['TÜİK TÜFE']?.some((d) => d.y !== null && d.y !== undefined);
-        const tuikSeries = dates.map((_, idx) => {
-          const point = result['TÜİK TÜFE']?.find((d) => d.x === idx);
-          return point ? point.y : null;
-        });
-
-        if (selectedHarcamaGrubu !== groupName) return;
-        
-        // Tarihleri YYYY-MM formatına çevir
-        const formattedDates = dates.map(formatDateToYearMonth);
-
-        setEndeksChartData({
-          labels: formattedDates.map((_, i) => (i % Math.ceil(formattedDates.length / 5) === 0 ? formattedDates[i] : '')),
-          datasets: [
-            {
-              data: result['Web TÜFE']?.map((d) => d.y) || [],
-              color: () => `rgba(25, 118, 210, 1)`,
-              strokeWidth: 3,
-            },
-            {
-              data: tuikSeries,
-              color: () => `rgba(211, 47, 47, 1)`,
-              strokeWidth: 3,
-            },
-          ],
-          legend: ['Web TÜFE', hasTuikData ? 'TÜİK' : 'TÜİK (boş)'],
-        });
-      }
+      setEndeksChartData({
+        labels: formattedDates.map((_, i) => (i % Math.ceil(formattedDates.length / 5) === 0 ? formattedDates[i] : '')),
+        datasets: [
+          {
+            data: data.map((d) => d.endeks),
+            color: () => `rgba(25, 118, 210, 1)`,
+            strokeWidth: 3,
+          },
+        ],
+        legend: ['Web TÜFE'],
+      });
     } catch (e) {
       console.log('Endeks grafik veri yükleme hatası:', e);
     }
@@ -310,39 +226,11 @@ const HarcamaGruplariPage = () => {
     if (!groupName || data.length === 0) return;
 
     try {
-      const tuikData = await TuikService.loadTuikHarcamaGrubuData(groupName);
-      const tuikDates = tuikData.dates as string[];
-      const tuikKey = Object.keys(tuikData.data)[0] || '';
-      const tuikValues = tuikKey ? (tuikData.data[tuikKey] as number[]) : [];
-
-      const webTufeMap: {[key: string]: number} = {};
-      data.forEach((item) => {
-        webTufeMap[item.tarih] = item.degisimOrani;
-      });
-
-      const tuikMap: {[key: string]: number} = {};
-      for (let i = 0; i < tuikDates.length && i < tuikValues.length; i++) {
-        tuikMap[tuikDates[i]] = tuikValues[i];
-      }
-
-      const allDates = Array.from(new Set([...Object.keys(webTufeMap), ...Object.keys(tuikMap)])).sort();
-
-      const webValues: number[] = [];
-      const tuikValuesArray: number[] = [];
-
-      allDates.forEach((date) => {
-        webValues.push(webTufeMap[date] ?? 0.0);
-        tuikValuesArray.push(tuikMap[date] ?? NaN);
-      });
-
-      // TÜİK olmayan noktalarda null kalsın; son değer uzatılmasın
+      const allDates = data.map((item) => item.tarih);
+      const webValues = data.map((item) => item.degisimOrani);
 
       if (selectedHarcamaGrubu !== groupName) return;
       setAylikChartDates(allDates);
-      const tuikSeries = tuikValuesArray.map((v) => (isNaN(v) ? null : v));
-      const hasTuikValues = tuikSeries.some((v) => v !== null);
-      
-      // Tarihleri YYYY-MM formatına çevir
       const formattedMonthlyDates = allDates.map(formatDateToYearMonth);
 
       setAylikChartData({
@@ -353,14 +241,8 @@ const HarcamaGruplariPage = () => {
             color: () => `rgba(25, 118, 210, 1)`,
             strokeWidth: 3,
           },
-          {
-            // TÜİK olmayan noktalarda 0 basma; çizgiyi kesmek için null bırak.
-            data: tuikSeries,
-            color: () => `rgba(211, 47, 47, 1)`,
-            strokeWidth: 3,
-          },
         ],
-        legend: ['Web TÜFE', hasTuikValues ? 'TÜİK' : 'TÜİK (boş)'],
+        legend: ['Web TÜFE'],
       });
     } catch (e) {
       console.log('Aylık grafik veri yükleme hatası:', e);
@@ -564,7 +446,7 @@ const HarcamaGruplariPage = () => {
                   <Text style={styles.statsTitle}>{selectedHarcamaGrubu}</Text>
                   <View style={styles.statsRow}>
                     <View style={styles.statCard}>
-                      <Text style={styles.statLabel}>Yılbaşından Bu Yana</Text>
+                      <Text style={styles.statLabel}>Yıllık Değişim</Text>
                       <Text
                         style={[
                           styles.statValue,
@@ -598,18 +480,6 @@ const HarcamaGruplariPage = () => {
                   <Text style={styles.chartTitle}>
                     Endeks Değerleri
                   </Text>
-                  {endeksChartData.legend && endeksChartData.legend.length > 1 && (
-                    <View style={styles.legend}>
-                      <View style={styles.legendItem}>
-                        <View style={[styles.legendLine, {backgroundColor: '#2196F3'}]} />
-                        <Text style={styles.legendText}>Web TÜFE</Text>
-                      </View>
-                      <View style={styles.legendItem}>
-                        <View style={[styles.legendLine, {backgroundColor: '#f44336'}]} />
-                        <Text style={styles.legendText}>TÜİK</Text>
-                      </View>
-                    </View>
-                  )}
                   <LineChartWithHover
                     data={endeksChartData}
                     width={Math.max(0, windowWidth - 32)}
@@ -631,18 +501,6 @@ const HarcamaGruplariPage = () => {
                   <Text style={styles.chartTitle}>
                     Aylık Değişim (%)
                   </Text>
-                  {aylikChartData.legend && aylikChartData.legend.length > 1 && (
-                    <View style={styles.legend}>
-                      <View style={styles.legendItem}>
-                        <View style={[styles.legendLine, {backgroundColor: '#2196F3'}]} />
-                        <Text style={styles.legendText}>Web TÜFE</Text>
-                      </View>
-                      <View style={styles.legendItem}>
-                        <View style={[styles.legendLine, {backgroundColor: '#f44336'}]} />
-                        <Text style={styles.legendText}>TÜİK</Text>
-                      </View>
-                    </View>
-                  )}
                   <LineChartWithHover
                     data={aylikChartData}
                     width={Math.max(0, windowWidth - 32)}

@@ -361,33 +361,65 @@ class HarcamaGruplariService {
     }
   }
 
-  // Harcama grubu istatistiklerini hesapla - sadece aylık veriden
+  /// harcamagruplarıyıllık.csv'den seçili harcama grubu için yıllık değişimi okur.
+  /// Son (en güncel) değeri döndürür.
+  static Future<double> getHarcamaGrubuYillikDegisim(String selectedGrup) async {
+    try {
+      final String csvData = await GitHubCSVService.loadCSVFromGitHub(
+        'harcamagruplarıyıllık.csv',
+      );
+
+      List<String> lines = csvData.split(RegExp(r'\r?\n'));
+      lines = lines.where((l) => l.trim().isNotEmpty).toList();
+      if (lines.length < 2) return 0.0;
+
+      List<List<dynamic>> parsedHeader =
+          const CsvToListConverter().convert(lines[0]);
+      List<dynamic> headerRow = parsedHeader.isNotEmpty ? parsedHeader[0] : [];
+
+      int colIndex = -1;
+      String normalizedSelected = selectedGrup.trim().toLowerCase();
+      for (int i = 1; i < headerRow.length; i++) {
+        String colName = headerRow[i].toString().trim().toLowerCase();
+        if (colName == normalizedSelected) {
+          colIndex = i;
+          break;
+        }
+      }
+      if (colIndex < 0) return 0.0;
+
+      for (int i = lines.length - 1; i >= 1; i--) {
+        try {
+          List<List<dynamic>> parsed =
+              const CsvToListConverter().convert(lines[i]);
+          if (parsed.isNotEmpty &&
+              parsed[0].length > colIndex &&
+              parsed[0][colIndex].toString().trim().isNotEmpty) {
+            double? val = double.tryParse(parsed[0][colIndex].toString());
+            if (val != null) return val;
+          }
+        } catch (_) {
+          continue;
+        }
+      }
+      return 0.0;
+    } catch (e) {
+      throw Exception('Yıllık değişim okuma hatası: $e');
+    }
+  }
+
+  // Harcama grubu istatistiklerini hesapla
   static Future<HarcamaGrubuIstatistik> calculateHarcamaGrubuStatistics(
       String selectedGrup) async {
     try {
-      // Endeks ve aylık verilerini al
-      final endeksData = await loadHarcamaGrubuEndeksData(selectedGrup);
+      final yillikDegisim = await getHarcamaGrubuYillikDegisim(selectedGrup);
       final aylikData = await loadHarcamaGrubuAylikData(selectedGrup);
 
-      if (endeksData.isEmpty || aylikData.isEmpty) {
+      if (aylikData.isEmpty) {
         throw Exception('Yeterli veri bulunamadı');
       }
 
-      // En son aylık değişim (son tarih)
       double aylikDegisim = aylikData.last.degisimOrani;
-
-      // Yıllık değişim hesaplama - endeks verilerinden yılbaşından bu yana
-      double yillikDegisim = 0.0;
-
-      // Endeks verilerinden yılbaşından bu yana değişimi hesapla
-      if (endeksData.length >= 2) {
-        double ilkEndeks = endeksData.first.endeks;
-        double sonEndeks = endeksData.last.endeks;
-
-        if (ilkEndeks > 0) {
-          yillikDegisim = ((sonEndeks - ilkEndeks) / ilkEndeks) * 100;
-        }
-      }
 
       return HarcamaGrubuIstatistik(
         yillikDegisim: yillikDegisim,

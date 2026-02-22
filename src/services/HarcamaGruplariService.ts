@@ -387,21 +387,66 @@ export class HarcamaGruplariService {
     }
   }
 
+  /**
+   * harcamagruplarıyıllık.csv'den seçili harcama grubu için yıllık değişimi okur.
+   * Son (en güncel) değeri döndürür.
+   */
+  static async getHarcamaGrubuYillikDegisim(
+    selectedGrup: string
+  ): Promise<number> {
+    try {
+      const csvData = await GitHubCSVService.loadCSVFromGitHub(
+        'harcamagruplarıyıllık.csv'
+      );
+
+      const lines = csvData.split(/\r?\n/).filter((l) => l.trim().length > 0);
+      if (lines.length < 2) return 0.0;
+
+      const parsedHeader = Papa.parse(lines[0], {
+        header: false,
+        skipEmptyLines: true,
+      });
+      const headerRow =
+        parsedHeader.data.length > 0 && Array.isArray(parsedHeader.data[0])
+          ? (parsedHeader.data[0] as any[])
+          : [];
+
+      const colIndex = this.findColumnIndex(headerRow, selectedGrup);
+      if (colIndex < 0 || colIndex >= headerRow.length) return 0.0;
+
+      for (let i = lines.length - 1; i >= 1; i--) {
+        try {
+          const parsed = Papa.parse(lines[i], {
+            header: false,
+            skipEmptyLines: true,
+          });
+          if (
+            parsed.data.length > 0 &&
+            Array.isArray(parsed.data[0]) &&
+            (parsed.data[0] as any[]).length > colIndex
+          ) {
+            const row = parsed.data[0] as any[];
+            const val = parseFloat(row[colIndex]?.toString() || '');
+            if (Number.isFinite(val)) return val;
+          }
+        } catch {
+          continue;
+        }
+      }
+      return 0.0;
+    } catch (e) {
+      throw new Error(`Yıllık değişim okuma hatası: ${e}`);
+    }
+  }
+
   static async calculateHarcamaGrubuStatistics(
     selectedGrup: string
   ): Promise<HarcamaGrubuIstatistik> {
     try {
-      const [endeks, aylik] = await Promise.all([
-        this.loadHarcamaGrubuEndeksData(selectedGrup),
+      const [yillikDegisim, aylik] = await Promise.all([
+        this.getHarcamaGrubuYillikDegisim(selectedGrup),
         this.loadHarcamaGrubuAylikData(selectedGrup),
       ]);
-
-      const firstEndeks = endeks.length > 0 ? endeks[0].endeks : NaN;
-      const lastEndeks = endeks.length > 0 ? endeks[endeks.length - 1].endeks : NaN;
-      const yillikDegisim =
-        Number.isFinite(firstEndeks) && firstEndeks !== 0 && Number.isFinite(lastEndeks)
-          ? ((lastEndeks / firstEndeks) - 1) * 100
-          : 0.0;
 
       const lastAylik = aylik.length > 0 ? aylik[aylik.length - 1].degisimOrani : 0.0;
 

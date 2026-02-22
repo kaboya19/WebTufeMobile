@@ -24,6 +24,10 @@ class GitHubCSVService {
       'harcama_grupları.csv',
       'harcamagrupları.csv'
     ],
+    'harcamagruplarıyıllık.csv': [
+      'harcamagruplarıyıllık.csv',
+      'harcamagruplariyillik.csv',
+    ],
     'urunler.csv': ['urunler.csv', 'ürünler.csv'],
     'tufe.csv': ['tufe.csv', 'tüfe.csv'],
   };
