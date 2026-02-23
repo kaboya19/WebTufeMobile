@@ -17,7 +17,7 @@ import MetodolojiPage from './pages/MetodolojiPage';
 import {GitHubCSVService} from './services/GitHubCSVService';
 
 // Bakım modu - true olduğunda sadece bakım ekranı gösterilir
-const MAINTENANCE_MODE = false;
+const MAINTENANCE_MODE = true;
 
 const Tab = createBottomTabNavigator();
 
@@ -26,7 +26,7 @@ const MaintenanceScreen = () => {
     <View style={styles.container}>
       <Icon name="construction" size={80} color="#1976D2" />
       <Text style={styles.message}>
-        Yeni endekse uyum çalışmaları kapsamında web sitesi yenileniyor. Sabrınız için teşekkürler...
+        Şubata ayı nihai veriler hazırlanıyor. Sabrınız için teşekkürler...
       </Text>
     </View>
   );
