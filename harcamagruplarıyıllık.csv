@@ -19,7 +19,7 @@ Yumurta,18.920418669864603
 Tereyağı,39.716159418040434
 Margarin,40.88833671754087
 "Sıvı yağlar (zeytinyağı, ayçiçek yağı)",31.165193349000585
-Taze meyveler,34.205608171648635
+Taze meyveler,34.20560817164861
 Kuru meyve ve sert kabuklu yemişler,34.965968757246266
 Taze sebzeler (patates hariç),69.91754065938231
 Patates,28.5822451075445
@@ -35,7 +35,7 @@ Toz kakao,33.13280953007825
 Su ve maden suyu,29.46964451649061
 "Alkolsüz içecekler (meşrubat, ayran vb.)",36.68643450362084
 Meyve ve sebze suları,39.08995519792029
-"Alkollü içecekler (rakı, viski, votka vb.)",21.68028731806304
+"Alkollü içecekler (rakı, viski, votka vb.)",21.68028731806313
 Şarap,8.599172719231142
 Bira,26.8977309637199
 Sigaralar,36.0232234126038
@@ -53,8 +53,8 @@ Gerçek kira,60.82238892131786
 Konutun bakım ve onarımı için malzemeler,33.96462543580616
 Su (şebeke suyu),25.745061616349307
 Elektrik,33.12500000000005
-Doğalgaz ve ilgili abonelik ücretleri,24.569612976624413
-Tüpgaz (ev tüpü),28.61309796162308
+Doğalgaz ve ilgili abonelik ücretleri,24.569612976624498
+Tüpgaz (ev tüpü),28.61309796162299
 "Katı yakıtlar (odun, kömür)",35.944063168896776
 Mutfak mobilyaları,14.560332651677443
 Yatak odası mobilyaları,20.69291486381095
@@ -71,7 +71,7 @@ Elektrikli küçük ev aletleri,15.513250696045922
 Çatal-bıçak takımı,13.054317547251305
 "Elektriksiz mutfak eşyaları ve ev gereçleri (tencere, tava, çaydanlık vb.)",16.366963128799505
 "Çeşitli küçük aksesuarlar (pil, ampul vb.)",26.052271793645197
-Evle ilgili küçük bakım-tamir mal ve hizmetleri,16.28017404818376
+Evle ilgili küçük bakım-tamir mal ve hizmetleri,16.28017404818378
 "Ev ile ilgili temizlik malzemeleri (deterjan, yumuşatıcı vb.)",15.760601599029854
 "Ev ile ilgili diğer temizlik malzemeleri (bulaşık süngeri, çöp torbası vb.)",26.198594959184994
 Ev içi hizmetler (gündelikçi ücreti),28.261352006682582
@@ -90,7 +90,7 @@ Otobüs ile şehir içi yolcu taşımacılığı,33.94943574426217
 Karayolu ile şehirler arası yolcu taşımacılığı,22.01111470219923
 Havayolu ile yolcu taşımacılığı,51.71597614380274
 Deniz ve yurt içi su yolu ile yolcu taşımacılığı,40.20957675391137
-"Diğer satın alınan ulaştırma hizmetleri (nakliye, kargo vb.)",22.069874947083477
+"Diğer satın alınan ulaştırma hizmetleri (nakliye, kargo vb.)",22.069874947083434
 "Mobil telefon, ekipman ve aksesuarları",5.582810821677842
 Telefon (mobil ve sabit hat) ve internet ücretleri,16.60166610821847
 Televizyonlar,10.630820551823117
@@ -99,7 +99,7 @@ Müzik enstrümanları,18.195455045034237
 "Oyunlar, oyuncaklar ve hobiler",17.012497347358103
 "Spor, kamp ve açık hava eğlence malzemeleri",18.757324417481215
 Evcil hayvanlar ile ilgili ürünler,10.432971905772813
-Evcil hayvanlarla ilgili veterinerlik ve diğer hizmetler,35.04108731545368
+Evcil hayvanlarla ilgili veterinerlik ve diğer hizmetler,35.041087315453545
 Kitaplar,18.813211854415314
 Kırtasiye malzemeleri,17.084939179081825
 Okul öncesi eğitim ve ilköğretim,41.12785466953062
@@ -112,9 +112,9 @@ Erkekler için kuaförlük hizmetleri,91.71347235989629
 Kadınlar için kuaförlük hizmetleri,67.23237361460421
 Kişisel bakımda kullanılan elektrikli aletler,16.597827977540526
 "Kişisel hijyen ve bakım için kullanılan ürünler, kozmetikler",14.517828306715774
-"Mücevheratlar, saat ve kol saatleri",90.40802877107427
+"Mücevheratlar, saat ve kol saatleri",90.40802877107433
 Seyahat malzemeleri ve diğer kişisel aksesuarlar,22.09426517288946
 Başka yerde sınıflandırılmamış diğer kişisel aksesuarlar,17.799937171492196
-Başka yerde sınıflandırılmayan diğer mali hizmetler (para havale ücreti vb.),30.91076551839207
+Başka yerde sınıflandırılmayan diğer mali hizmetler (para havale ücreti vb.),30.910765518392047
 "Başka yerde sınıflandırılamayan diğer gıda ürünleri (tuz, sirke, ketçap, mayonez vb.)",24.553768986337833
 TÜFE,
